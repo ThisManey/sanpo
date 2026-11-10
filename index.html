@@ -923,7 +923,7 @@ textarea.input{resize:vertical;min-height:64px}
        <div class="summary">
          <div><span>距離</span><strong id="sumDist">-</strong></div>
          <div><span>目安時間</span><strong id="sumTime">-</strong></div>
-         <div><span>上限まで</span><strong id="sumLeft">-</strong></div>
+         <div><span>同じ道</span><strong id="sumOverlap">-</strong></div>
        </div>
        <p class="note" id="routeNote"></p>
        <div class="row">
@@ -1207,9 +1207,9 @@ maxIn.value = S.maxKm; maxIn.oninput = applyMax;
 
 /* ---------- ルート生成 ---------- */
 // 歩行者用ルーティング（OSRM / FOSSGIS 公開サーバー）
-async function osrm(points) {
+async function osrm(points, straight = false) {
   const coords = points.map(p => p[1].toFixed(6) + ',' + p[0].toFixed(6)).join(';');
-  const url = `https://routing.openstreetmap.de/routed-foot/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true&continue_straight=false`;
+  const url = `https://routing.openstreetmap.de/routed-foot/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true&continue_straight=${straight ? 'true' : 'false'}`;
   const r = await fetch(url);
   if (!r.ok) throw new Error('ルート検索サーバーに接続できませんでした（' + r.status + '）');
   const j = await r.json();
@@ -1217,28 +1217,71 @@ async function osrm(points) {
   return j.routes[0];
 }
 
-// 楕円（スタートとゴールが焦点）の中にランダムな経由地を置く
-function genWaypoints(start, goal, budget, loop) {
-  const mid = [(start[0] + goal[0]) / 2, (start[1] + goal[1]) / 2];
-  const direct = dist(start, goal);
-  const n = loop ? (Math.random() < .5 ? 2 : 3) : (direct > budget * .6 ? 1 : (Math.random() < .5 ? 1 : 2));
-  for (let t = 0; t < 600; t++) {
-    let pts = [];
-    for (let i = 0; i < n; i++) pts.push(offset(mid, Math.random() * 360, Math.sqrt(Math.random()) * budget / 2));
-    if (loop) {
-      const c = [(start[0] + pts.reduce((s, p) => s + p[0], 0)) / (n + 1), (start[1] + pts.reduce((s, p) => s + p[1], 0)) / (n + 1)];
-      const a0 = bearingOf(c, start);
-      pts.sort((p, q) => ((bearingOf(c, p) - a0 + 360) % 360) - ((bearingOf(c, q) - a0 + 360) % 360));
-    } else {
-      const along = p => { const b = toRad(bearingOf(start, p) - bearingOf(start, goal)); return dist(start, p) * Math.cos(b); };
-      pts.sort((p, q) => along(p) - along(q));
-    }
-    const chain = [start, ...pts, goal];
-    let L = 0; for (let i = 0; i < chain.length - 1; i++) L += dist(chain[i], chain[i + 1]);
-    const tooClose = pts.some(p => dist(p, start) < budget * .08);
-    if (L <= budget && L >= budget * .6 && !tooClose) return pts;
+// 平面座標（メートル）との変換
+function proj(o) {
+  const kx = 111320 * Math.cos(toRad(o[0])), ky = 110540;
+  return { to: p => [(p[1] - o[1]) * kx, (p[0] - o[0]) * ky], from: q => [o[0] + q[1] / ky, o[1] + q[0] / kx] };
+}
+
+// 周回: スタートを通る円の上に寄り道ポイントを並べる
+function loopWaypoints(A, len, n) {
+  const P = proj(A), r = len / (2 * Math.PI), t0 = Math.random() * 2 * Math.PI;
+  const C = [r * Math.cos(t0), r * Math.sin(t0)], a0 = t0 + Math.PI, dir = Math.random() < .5 ? 1 : -1;
+  const out = [];
+  for (let i = 1; i <= n; i++) {
+    const a = a0 + dir * 2 * Math.PI * i / (n + 1) + (Math.random() - .5) * .35;
+    const rr = r * (.85 + Math.random() * .3);
+    out.push(P.from([C[0] + rr * Math.cos(a), C[1] + rr * Math.sin(a)]));
   }
-  return null;
+  return out;
+}
+
+// 片道: スタートとゴールを結ぶ弧（左右どちらかにふくらむ）の上に寄り道ポイントを並べる
+function arcWaypoints(A, B, len, n) {
+  const P = proj(A), b = P.to(B), c = Math.hypot(b[0], b[1]), k = len / c;
+  let lo = 1e-6, hi = Math.PI - 1e-3;           // φ/sinφ = k を解く（φは弧の半分の角度）
+  for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if (m / Math.sin(m) < k) lo = m; else hi = m; }
+  const phi = (lo + hi) / 2, R = c / (2 * Math.sin(phi));
+  const side = Math.random() < .5 ? 1 : -1, beta = Math.atan2(b[1], b[0]), M = [b[0] / 2, b[1] / 2];
+  const out = [];
+  for (let i = 1; i <= n; i++) {
+    const t = i / (n + 1) + (Math.random() - .5) * .12;
+    const ang = Math.PI / 2 + phi - t * 2 * phi, rr = R * (.9 + Math.random() * .2);
+    const lx = rr * Math.cos(ang), ly = side * (-R * Math.cos(phi) + rr * Math.sin(ang));
+    out.push(P.from([M[0] + lx * Math.cos(beta) - ly * Math.sin(beta), M[1] + lx * Math.sin(beta) + ly * Math.cos(beta)]));
+  }
+  return out;
+}
+
+// 同じ道を2回通る区間を探す（10mごとに区切り、ルート上で離れた位置どうしが近くて同じ向きの道なら重なりとみなす）
+function overlapInfo(coords) {
+  if (coords.length < 2) return { ratio: 0, runs: [] };
+  const P = proj(coords[0]), pts = coords.map(P.to), S = [], STEP = 10;
+  let next = 0, cum = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (!L) continue;
+    const h = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    while (next <= cum + L) { const f = (next - cum) / L; S.push({ x: a[0] + f * (b[0] - a[0]), y: a[1] + f * (b[1] - a[1]), s: next, h }); next += STEP; }
+    cum += L;
+  }
+  const G = new Map(), key = (x, y) => Math.floor(x / 20) + ',' + Math.floor(y / 20);
+  S.forEach((p, i) => { const k = key(p.x, p.y); (G.get(k) || G.set(k, []).get(k)).push(i); });
+  const mark = new Array(S.length).fill(false);
+  S.forEach((p, i) => {
+    const cx = Math.floor(p.x / 20), cy = Math.floor(p.y / 20);
+    for (let dx = -1; dx <= 1 && !mark[i]; dx++) for (let dy = -1; dy <= 1 && !mark[i]; dy++) {
+      for (const j of G.get((cx + dx) + ',' + (cy + dy)) || []) {
+        const q = S[j];
+        if (Math.abs(p.s - q.s) > 80 && Math.hypot(p.x - q.x, p.y - q.y) < 12 && Math.abs(Math.cos(p.h - q.h)) > .8) { mark[i] = true; break; }
+      }
+    }
+  });
+  const runs = []; let cur = null;
+  S.forEach((p, i) => {
+    if (mark[i]) { if (!cur) runs.push(cur = []); cur.push(P.from([p.x, p.y])); } else cur = null;
+  });
+  return { ratio: S.length ? mark.filter(Boolean).length / S.length : 0, runs: runs.filter(r => r.length > 1) };
 }
 
 let making = false;
@@ -1256,18 +1299,36 @@ async function makeRoute() {
   making = true;
   const btn = $('#btnMake'), btn2 = $('#btnAgain'); const html = btn.innerHTML;
   btn.disabled = btn2.disabled = true; btn.innerHTML = '<span class="spin"></span> 道を探しています…';
-  let best = null, lastErr = null, note = '';
+  const minOK = S.loop ? maxM * .5 : Math.min(maxM * .5, direct * 1.3);
+  let factor = S.detour || 1.3, best = null, bestScore = Infinity, lastErr = null, note = '';
+  const score = r => r._ov.ratio + .35 * (maxM - r.distance) / maxM;
+
+  async function candidate() {
+    const target = maxM * (.78 + Math.random() * .17), geom = target / factor;
+    let wps;
+    if (S.loop) wps = loopWaypoints(start, geom, geom > 5000 ? 4 : 3);
+    else wps = geom < direct * 1.08 ? [] : arcWaypoints(start, goal, geom, geom / direct > 2.2 ? 2 : 1);
+    const chain = [start, ...wps, goal];
+    let gl = 0; for (let i = 0; i < chain.length - 1; i++) gl += dist(chain[i], chain[i + 1]);
+    const r = await osrm(chain, true);
+    if (gl > 50) factor = Math.min(2.2, Math.max(1.05, factor * .5 + (r.distance / gl) * .5));
+    r._ov = overlapInfo(r.geometry.coordinates.map(c => [c[1], c[0]]));
+    return r;
+  }
+
   try {
-    for (let a = 0; a < 7 && !best; a++) {
-      const budget = maxM * (.74 - a * .07);
-      if (budget < direct * 1.05) break;
-      const wps = genWaypoints(start, goal, budget, S.loop);
-      if (!wps) continue;
-      try {
-        const r = await osrm([start, ...wps, goal]);
-        if (r.distance <= maxM && r.distance >= Math.min(maxM * .35, direct * 1.1 + 300)) best = r;
-      } catch (e) { lastErr = e; if (/接続/.test(e.message)) break; }
+    for (let round = 0; round < 4; round++) {
+      const res = await Promise.allSettled([candidate(), candidate()]);
+      let failed = 0;
+      res.forEach(x => {
+        if (x.status === 'rejected') { failed++; lastErr = x.reason; return; }
+        const r = x.value;
+        if (r.distance <= maxM && r.distance >= minOK) { const s = score(r); if (s < bestScore) { best = r; bestScore = s; } }
+      });
+      if (failed === res.length && lastErr && /接続/.test(lastErr.message)) break;
+      if (best && best._ov.ratio <= .04 && best.distance >= maxM * .7) break;
     }
+    S.detour = factor;
     if (!best && !S.loop) {
       const r = await osrm([start, goal]);
       if (r.distance <= maxM) { best = r; note = '寄り道できる余裕がなかったので、最短に近いルートになりました。'; }
@@ -1319,6 +1380,8 @@ function setRoute(r, start, goal, note) {
   routeLayer.clearLayers();
   L.polyline(coords, { color: '#ffffff', weight: 10, opacity: .95, lineJoin: 'round' }).addTo(routeLayer);
   L.polyline(coords, { color: '#1f5fd1', weight: 5.5, lineJoin: 'round' }).addTo(routeLayer);
+  const ov = overlapInfo(coords);
+  ov.runs.forEach(run => L.polyline(run, { color: '#e8730c', weight: 6, opacity: .95, lineCap: 'round', interactive: false }).addTo(routeLayer));
   // 進む向きの目印
   for (let s = 250; s < total - 100; s += 400) {
     let i = cum.findIndex(c => c >= s); if (i < 1) continue;
@@ -1331,8 +1394,10 @@ function setRoute(r, start, goal, note) {
   const maxM = S.maxKm * 1000;
   $('#sumDist').textContent = fmtDist(total);
   $('#sumTime').textContent = fmtMin(total);
-  $('#sumLeft').textContent = fmtDist(Math.max(0, maxM - total));
-  $('#routeNote').textContent = note || `上限 ${S.maxKm.toFixed(1)} km の中でランダムに寄り道するルートです。気に入らなければ「別のルート」を押してください。`;
+  const pct = Math.round(ov.ratio * 100);
+  $('#sumOverlap').textContent = pct <= 2 ? 'ほぼなし' : pct + '%';
+  const ovText = pct <= 2 ? '同じ道をほとんど通らないルートです。' : `同じ道を2回通る区間が約${pct}%あります（地図のオレンジの線）。`;
+  $('#routeNote').textContent = (note ? note + ' ' : '') + `${ovText}上限 ${S.maxKm.toFixed(1)} km まであと ${fmtDist(Math.max(0, maxM - total))}。気に入らなければ「別のルート」を押してください。`;
   $('#routeInfo').hidden = false;
   renderNavPanel();
 }
