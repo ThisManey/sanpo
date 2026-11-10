@@ -759,6 +759,10 @@ h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance}
 .row>.btn{flex:1 1 140px}
 
 .note{font-size:13px;color:var(--muted);margin:0}
+.about{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.about summary{cursor:pointer;font-weight:700}
+.about ul{margin:8px 0 0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.about a{color:var(--moss)}
 .alert{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--warn-soft);color:var(--warn);margin:0}
 
 /* ルート概要 */
@@ -931,6 +935,16 @@ textarea.input{resize:vertical;min-height:64px}
          <button class="btn primary" id="btnStart2">案内を開始</button>
        </div>
      </div>
+
+     <details class="about" id="about">
+       <summary>このアプリについて</summary>
+       <ul>
+         <li>ルートは OpenStreetMap の地図データから自動で作っています。工事中や私有地、夜は暗い道などが含まれることがあります。現地の標識と安全を優先して歩いてください。</li>
+         <li>地名の検索とルートの作成では、入力した地名や地点の位置を <a href="https://nominatim.openstreetmap.org/">OpenStreetMap Nominatim</a> と <a href="https://routing.openstreetmap.de/about.html">FOSSGIS のルート検索サーバー</a> に送ります。送った内容は各サーバーの記録に残ります。</li>
+         <li>写真とメモはこの端末のブラウザ内にだけ保存され、どこにも送信されません。案内中の現在地も送信しません（ルートを外れて引き直すときだけ、ルート検索サーバーに送ります）。</li>
+         <li>地図: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>（ODbL）／地図表示: <a href="https://leafletjs.com">Leaflet</a></li>
+       </ul>
+     </details>
    </div>
 
    <!-- 案内 -->
@@ -1074,7 +1088,7 @@ const view = store.get('view', { c: [35.6812, 139.7671], z: 15 });
 const map = L.map('map', { zoomControl: false }).setView(view.c, view.z);
 let tileOk = 0, tileNg = 0, tileWarned = false;
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  maxZoom: 19, attribution: '地図・地名 &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | 経路 <a href="https://routing.openstreetmap.de/about.html">FOSSGIS OSRM</a> | <a href="https://www.openstreetmap.org/fixthemap">地図の誤りを報告</a>'
 }).on('tileload', () => tileOk++).on('tileerror', () => {
   tileNg++;
   if (!tileWarned && tileOk === 0 && tileNg >= 4) {
@@ -1207,7 +1221,15 @@ maxIn.value = S.maxKm; maxIn.oninput = applyMax;
 
 /* ---------- ルート生成 ---------- */
 // 歩行者用ルーティング（OSRM / FOSSGIS 公開サーバー）
+// FOSSGIS の利用規約: リクエストは1秒に1回まで
+let osrmNext = 0;
+async function osrmWait() {
+  const now = Date.now(), at = Math.max(now, osrmNext);
+  osrmNext = at + 1100;
+  if (at > now) await new Promise(r => setTimeout(r, at - now));
+}
 async function osrm(points, straight = false) {
+  await osrmWait();
   const coords = points.map(p => p[1].toFixed(6) + ',' + p[0].toFixed(6)).join(';');
   const url = `https://routing.openstreetmap.de/routed-foot/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true&continue_straight=${straight ? 'true' : 'false'}`;
   const r = await fetch(url);
@@ -1317,8 +1339,8 @@ async function makeRoute() {
   }
 
   try {
-    for (let round = 0; round < 4; round++) {
-      const res = await Promise.allSettled([candidate(), candidate()]);
+    for (let round = 0; round < 5; round++) {
+      const res = await Promise.allSettled([candidate()]);
       let failed = 0;
       res.forEach(x => {
         if (x.status === 'rejected') { failed++; lastErr = x.reason; return; }
