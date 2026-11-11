@@ -2,15 +2,12 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<!-- 通信先は 地図画像・地名検索・ルート検索 の3つだけに制限する -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob: https://tile.openstreetmap.org; connect-src https://nominatim.openstreetmap.org https://routing.openstreetmap.de; media-src 'self' blob:; base-uri 'none'; form-action 'none'">
-<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2f6b4f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>さんぽみち</title>
-<style>/* Leaflet 1.9.4 (BSD-2-Clause) — license text is included with the script below */
+<style>/* Leaflet 1.9.4 (BSD-2-Clause) */
 /* required styles */
 
 .leaflet-pane,
@@ -674,13 +671,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	}
 
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=BIZ+UDPGothic:wght@400;700&display=swap">
 <style>
 /* レイアウト: 全画面の地図 + 下から出るシート（ルート／案内／写真）+ 案内中は上部にHUD */
 :root{
   --paper:#f3f6f2; --surface:#ffffff; --surface-2:#eef3ef; --ink:#1b2a22; --muted:#5d6e65; --line:#d7e1da;
   --moss:#2f6b4f; --moss-ink:#ffffff; --moss-soft:#dcebe2; --route:#1f5fd1; --warn:#b4470f; --warn-soft:#fbe7da; --sun:#e9a92a;
-  --display:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Noto Sans JP",system-ui,sans-serif;
-  --body:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",system-ui,sans-serif;
+  --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",system-ui,sans-serif;
+  --body:"BIZ UDPGothic","Hiragino Sans","Noto Sans JP","Yu Gothic",system-ui,sans-serif;
   --shadow:0 6px 24px rgba(20,40,30,.16),0 1px 3px rgba(20,40,30,.12);
   color-scheme:light;
 }
@@ -703,14 +703,10 @@ h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance}
 .brand{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.04em}
 .brand-mark{width:28px;height:28px;border-radius:50%;background:var(--moss);display:grid;place-items:center}
 .leaflet-top.leaflet-right{top:calc(env(safe-area-inset-top,0px) + 4px);right:env(safe-area-inset-right,0px)}
-.leaflet-control-attribution{font-size:10px;line-height:1.35;border-radius:0 0 0 8px;max-width:calc(100vw - 200px);white-space:normal;text-align:right}
+.leaflet-control-attribution{font-size:10px;border-radius:6px 0 0 6px}
 
 /* 右側の丸ボタン */
 .fabs{position:fixed;z-index:700;right:max(12px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 64px);display:flex;flex-direction:column;gap:10px}
-/* 案内中: 上部の案内表示に隠れないよう、ボタンと地図の出典表示を移す */
-body.navving .fabs{top:calc(env(safe-area-inset-top,0px) + 168px)}
-body.navving .leaflet-top.leaflet-right{top:auto;right:auto;left:env(safe-area-inset-left,0px);bottom:calc(env(safe-area-inset-bottom,0px) + 92px)}
-body.navving .leaflet-control-attribution{border-radius:0 8px 8px 0;text-align:left}
 .fab{width:46px;height:46px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer}
 .fab svg{width:22px;height:22px}
 .fab.on{background:var(--moss);color:var(--moss-ink)}
@@ -765,9 +761,7 @@ body.navving .leaflet-control-attribution{border-radius:0 8px 8px 0;text-align:l
 .note{font-size:13px;color:var(--muted);margin:0}
 .about{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
 .about summary{cursor:pointer;font-weight:700}
-.about ul,.about ol{margin:6px 0 0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px}
-.about h4{margin:12px 0 0;font-family:var(--display);font-size:14px;color:var(--ink)}
-.about b{color:var(--ink)}
+.about ul{margin:8px 0 0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
 .about a{color:var(--moss)}
 .alert{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--warn-soft);color:var(--warn);margin:0}
 
@@ -821,7 +815,7 @@ details.steps summary{cursor:pointer;font-weight:700;font-size:14px}
   top:calc(env(safe-area-inset-top,0px) + 150px);background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:12px;display:flex;flex-direction:column;gap:8px}
 .banner.pick{top:calc(env(safe-area-inset-top,0px) + 62px)}
 .banner p{margin:0;font-weight:700;font-size:14px}
-.banner .row>.btn{padding:9px 10px;font-size:14px;flex:1 1 90px}
+.banner .row>.btn{padding:9px 12px;font-size:14px}
 
 .toast{position:fixed;z-index:900;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 24px);background:var(--ink);color:var(--paper);
   padding:10px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px);box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s}
@@ -838,20 +832,6 @@ dialog::backdrop{background:rgba(10,20,15,.5)}
 .radio-list input{accent-color:var(--moss)}
 .radio-list small{color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
 textarea.input{resize:vertical;min-height:64px}
-.dlg-p{margin:0;font-size:14px}
-.dlg-list{margin:0;padding-left:1.2em;font-size:14px;display:flex;flex-direction:column;gap:6px}
-#welcomeDlg{overflow-y:auto}
-#howtoDlg video{display:block;width:100%;max-height:calc(100vh - 220px);max-height:calc(100dvh - 220px);aspect-ratio:9/16;background:#000;border-radius:10px;margin:0 auto}
-#howtoDlg .btn,.btn.sm{padding:8px 14px;font-size:14px}
-#shareDlg{overflow-y:auto}
-.dlg-sec{display:flex;flex-direction:column;gap:12px}
-#shareCanvas,#shareVideo,#shareImage{display:block;margin:0 auto;max-width:100%;width:auto;height:auto;max-height:calc(100vh - 330px);max-height:calc(100dvh - 330px);background:#000;border-radius:10px}
-.bar2{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
-.bar2 i{display:block;height:100%;width:0;background:var(--moss)}
-.walk{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px}
-.walk p{margin:0}
-#walkInfo{font-family:var(--display);font-weight:700;font-size:16px}
-.about>.btn{margin-top:8px;width:100%}
 
 .spin{width:16px;height:16px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:sp 0.8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -931,11 +911,10 @@ textarea.input{resize:vertical;min-height:64px}
      <div class="field">
        <label class="label" for="inMax">最大移動距離</label>
        <div class="dist-row">
-         <input type="range" id="inMax" min="0.5" max="15" step="0.1" value="3">
+         <input type="range" id="inMax" min="0.5" max="15" step="0.5" value="3">
          <span class="dist-val"><span id="maxVal">3.0</span><small>km</small></span>
        </div>
        <p class="note" id="maxHint">約45分の散歩</p>
-       <p class="note" id="minHint" hidden></p>
      </div>
 
      <button class="btn primary" id="btnMake">
@@ -948,7 +927,7 @@ textarea.input{resize:vertical;min-height:64px}
        <div class="summary">
          <div><span>距離</span><strong id="sumDist">-</strong></div>
          <div><span>目安時間</span><strong id="sumTime">-</strong></div>
-         <div><span>上限まで</span><strong id="sumLeft">-</strong></div>
+         <div><span>同じ道</span><strong id="sumOverlap">-</strong></div>
        </div>
        <p class="note" id="routeNote"></p>
        <div class="row">
@@ -959,51 +938,11 @@ textarea.input{resize:vertical;min-height:64px}
 
      <details class="about" id="about">
        <summary>このアプリについて</summary>
-       <h4>使い方</h4>
-       <button class="btn ghost" id="btnHowto" type="button">
-         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
-         使い方を動画で見る（約1分・音声なし）
-       </button>
-       <ol>
-         <li><b>スタートを決める</b>　「現在地」「地図」（地図をタップ）、または地名や駅名を入れて検索で選びます。ピンは指で動かせます。</li>
-         <li><b>ゴールを決める</b>　スタートと同じ方法で選びます。同じ場所に戻るなら「スタートに戻ってくる」にチェックを入れます。</li>
-         <li><b>距離を決める</b>　スライダーで歩きたい最大の距離を選びます。スタートとゴールが別の場所のときは、その間を歩ける最短距離より短くは選べません。</li>
-         <li><b>ルートを作る</b>　「ランダムにルートを作る」を押すと、その距離の中で寄り道するルートが青い線で出ます。気に入らなければ「別のルート」を押してください。</li>
-         <li><b>案内を始める</b>　「案内を開始」を押すと、画面上部に次に曲がる場所までの距離と向きが出て、曲がり角の手前で音声でもお知らせします。地図を動かして追いかけが止まったら、右上の矢印ボタンで戻せます。ルートを大きく外れると、現在地からゴールまでの道に自動で引き直します（「案内」タブで止められます）。</li>
-         <li><b>写真を残す</b>　「写真」タブの「写真を追加」で撮影するか写真を選び、場所を決めると地図に写真が並びます。地図や一覧の写真をタップすると大きく表示されます。</li>
-         <li><b>散歩を動画で共有する</b>　案内を終えると、「案内」タブに直近の散歩の記録が出ます。「動画にして共有する」を押すと、歩いた道をスタートからたどり、写真を順に大きく見せ、最後に全体を映す縦長の動画ができます。「共有する」から Instagram などに送れます。</li>
-         <li><b>写真をバックアップする</b>　写真はこの端末にだけ保存されます。機種変更の前などに「ファイルに書き出す」で保存し、新しい端末で「ファイルから読み込む」を使ってください。</li>
-       </ol>
-       <h4>はじめに許可が必要なこと</h4>
        <ul>
-         <li>位置情報の利用を「許可」してください。iPhoneで確認が出ないときは、設定 →「プライバシーとセキュリティ」→「位置情報サービス」→「Safari Webサイト」を「使用中のみ許可」にします。</li>
-         <li>案内中は画面をつけたままにしてください。画面が消えると案内が止まることがあります。</li>
-       </ul>
-       <h4>安全のために</h4>
-       <ul>
-         <li>画面を見るときは立ち止まってください。歩きながらの操作は危険です。音声案内を使うと画面を見る回数を減らせます。</li>
-         <li>ルートは OpenStreetMap の地図データから自動で作っています。工事中の道、私有地、階段、夜は暗い道などが含まれることがあります。現地の標識と交通ルールを優先し、通れないときは無理をせず別の道を歩いてください。</li>
-         <li>距離と時間は目安です。体調や天気に合わせて、余裕のある距離を選んでください。</li>
-       </ul>
-       <h4>情報の扱い</h4>
-       <ul>
-         <li><b>外部に送るもの</b>　地図を表示するとき、見ている場所の地図画像を <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a> から受け取ります。地名を検索すると、入力した言葉と表示中の地図のおおよその範囲を <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap Nominatim</a> に送ります。スタートとゴールの両方を決めたとき（歩ける最短距離を調べるため）と、ルートを作るときに、スタート、ゴール、寄り道地点の位置を <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">FOSSGIS のルート検索サーバー</a> に送ります。どの場合も接続元のIPアドレスが伝わり、各サービスの記録に残ります。</li>
-         <li><b>案内中の現在地</b>　ふだんは送りません。ルートを外れて引き直すときだけ、その時点の現在地をルート検索サーバーに送ります。大きく外れたときは自動で引き直すので、送りたくない場合は「案内」タブの「ルートを大きく外れたら自動で引き直す」のチェックを外してください。</li>
-         <li><b>送らないもの</b>　写真、メモ、歩いた軌跡は、アプリからはどこにも送りません。</li>
-         <li><b>端末に保存するもの</b>　写真、メモ、スタートとゴール、設定を、この端末のブラウザの中に保存します。写真に含まれていた撮影情報（位置や機種名など）は保存時に取り除き、場所は地図上の位置として別に記録します。歩いた軌跡は、共有用の動画を作るために直近の1回分だけ保存し、次に案内を始めると上書きします。</li>
-         <li><b>共有用の動画</b>　動画はこの端末の中で作ります。背景の地図を入れる場合だけ、歩いた範囲の地図画像を OpenStreetMap から受け取ります。「共有する」で選んだアプリに動画を渡すまで、どこにも送りません。SNSに投稿すると、歩いた場所や時間がほかの人に伝わります。</li>
-         <li><b>書き出したファイル</b>　写真と撮った場所、メモがそのまま入っています。人に渡すときは、自宅の場所などが含まれていないか確かめてください。</li>
-         <li><b>写真を撮るとき</b>　ほかの人の顔、表札、車のナンバーなどが写った写真の扱いに気をつけてください。</li>
-         <li>広告や利用状況の計測は入れていません。</li>
-       </ul>
-       <button class="btn danger" id="btnErase" type="button">保存したデータをすべて消す</button>
-       <h4>出典とライセンス</h4>
-       <ul>
-         <li>地図と地名のデータ: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>（ODbL）。地図の誤りは <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">こちら</a> から報告できます。</li>
-         <li>ルート検索: <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">FOSSGIS e.V.</a> が運営する OSRM サーバー</li>
-         <li>地図表示: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>（BSD 2-Clause License）</li>
-         <li>これらは寄付とボランティアで運営されている無料のサービスです。ルートの作り直しを何度も繰り返すなど、負荷をかける使い方は控えてください。</li>
-         <li id="srcRow" hidden>このアプリの公開元: <a id="srcLink" target="_blank" rel="noopener">GitHub のページ</a></li>
+         <li>ルートは OpenStreetMap の地図データから自動で作っています。工事中や私有地、夜は暗い道などが含まれることがあります。現地の標識と安全を優先して歩いてください。</li>
+         <li>地名の検索とルートの作成では、入力した地名や地点の位置を <a href="https://nominatim.openstreetmap.org/">OpenStreetMap Nominatim</a> と <a href="https://routing.openstreetmap.de/about.html">FOSSGIS のルート検索サーバー</a> に送ります。送った内容は各サーバーの記録に残ります。</li>
+         <li>写真とメモはこの端末のブラウザ内にだけ保存され、どこにも送信されません。案内中の現在地も送信しません（ルートを外れて引き直すときだけ、ルート検索サーバーに送ります）。</li>
+         <li>地図: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>（ODbL）／地図表示: <a href="https://leafletjs.com">Leaflet</a></li>
        </ul>
      </details>
    </div>
@@ -1018,22 +957,12 @@ textarea.input{resize:vertical;min-height:64px}
          <div><span>経過</span><strong id="navElapsed">0:00</strong></div>
        </div>
        <label class="check"><input type="checkbox" id="inVoice" checked> 音声で曲がる場所を知らせる</label>
-       <label class="check"><input type="checkbox" id="inAuto" checked> ルートを大きく外れたら自動で引き直す</label>
        <div class="row">
          <button class="btn primary" id="btnNav">案内を開始</button>
          <button class="btn danger" id="btnStop" hidden>案内を終了</button>
        </div>
-       <p class="note">案内中は画面をつけたままにしてください。地図を動かすと追いかけが止まります。右上の矢印ボタンで戻せます。自動で引き直すときは、その時点の現在地をルート検索サーバーに送ります。</p>
+       <p class="note">案内中は画面をつけたままにしてください。地図を動かすと追いかけが止まります。右上の矢印ボタンで戻せます。</p>
        <details class="steps"><summary>曲がる場所の一覧</summary><ol id="stepList"></ol></details>
-     </div>
-     <div id="walkBox" class="walk" hidden>
-       <span class="label">直近の散歩の記録</span>
-       <p id="walkInfo"></p>
-       <button class="btn primary" id="btnShare" type="button">
-         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"/></svg>
-         動画にして共有する
-       </button>
-       <p class="note">歩いた道と写真を、たどった順に見せる縦長の動画を作ります。動画はこの端末の中で作り、共有先を選ぶまでどこにも送りません。</p>
      </div>
    </div>
 
@@ -1060,7 +989,7 @@ textarea.input{resize:vertical;min-height:64px}
          <button class="btn ghost" id="btnImport">ファイルから読み込む</button>
        </div>
        <input type="file" id="importIn" accept="application/json,.json" hidden>
-       <p class="note">写真はこの端末のブラウザ内に保存されます。機種変更や別の端末に移すときは書き出したファイルを使ってください。書き出したファイルには写真と撮った場所が入っているので、人に渡すときは注意してください。</p>
+       <p class="note">写真はこの端末のブラウザ内に保存されます。機種変更や別の端末に移すときは書き出したファイルを使ってください。</p>
      </div>
    </div>
 
@@ -1087,102 +1016,9 @@ textarea.input{resize:vertical;min-height:64px}
   </form>
 </dialog>
 
-<dialog id="shareDlg" aria-labelledby="shareTitle">
-  <div class="dlg">
-    <div class="photo-head">
-      <h3 id="shareTitle">散歩を動画にする</h3>
-      <button class="btn ghost sm" id="shareClose" type="button">閉じる</button>
-    </div>
-    <div id="shareOpt" class="dlg-sec">
-      <p class="dlg-p" id="shareSum"></p>
-      <label class="check"><input type="checkbox" id="shHide" checked> スタートとゴールの近く（約150m）を動画に入れない</label>
-      <label class="check"><input type="checkbox" id="shMap" checked> 背景に地図を入れる</label>
-      <label class="check"><input type="checkbox" id="shNotes" checked> 写真のメモを入れる</label>
-      <p class="alert">動画には歩いた道と写真が入ります。SNSに投稿すると、歩いた場所や時間がほかの人に伝わります。自宅の近くを歩いたときは、1つめのチェックを入れたままにし、写真に自宅や人の顔が写っていないか確かめてください。</p>
-      <p class="alert" id="shareErr" hidden>動画を作れませんでした。もう一度試してください。</p>
-      <div class="row">
-        <button class="btn ghost" id="shareCancel" type="button">やめる</button>
-        <button class="btn primary" id="shareMake" type="button">動画を作る</button>
-      </div>
-    </div>
-    <div id="shareRec" class="dlg-sec" hidden>
-      <canvas id="shareCanvas" width="720" height="1280"></canvas>
-      <div class="bar2"><i id="shareBar"></i></div>
-      <p class="note" id="shareStatus" role="status"></p>
-    </div>
-    <div id="shareDone" class="dlg-sec" hidden>
-      <video id="shareVideo" controls playsinline loop muted></video>
-      <img id="shareImage" alt="散歩の記録" hidden>
-      <p class="alert" id="shareFmt" hidden></p>
-      <div class="row">
-        <button class="btn ghost" id="shareSave" type="button">端末に保存する</button>
-        <button class="btn primary" id="shareGo" type="button">共有する</button>
-      </div>
-      <p class="note" id="shareHow"></p>
-      <button class="btn ghost sm" id="shareClose2" type="button">閉じる</button>
-    </div>
-  </div>
-</dialog>
-
-<dialog id="howtoDlg" aria-labelledby="howtoTitle">
-  <div class="dlg">
-    <div class="photo-head">
-      <h3 id="howtoTitle">使い方の動画</h3>
-      <button class="btn ghost" id="howtoClose" type="button">閉じる</button>
-    </div>
-    <video id="howtoVideo" controls playsinline preload="none"></video>
-    <p class="alert" id="howtoErr" hidden>動画を読み込めませんでした。通信状況を確認して、もう一度開いてください。</p>
-    <p class="note">動画の地図は説明用の架空の街です。</p>
-  </div>
-</dialog>
-
-<dialog id="welcomeDlg" aria-labelledby="welcomeTitle">
-  <div class="dlg">
-    <h3 id="welcomeTitle">さんぽみちを使う前に</h3>
-    <p class="dlg-p">このアプリは、次のときに外部のサービスへ情報を送ります。</p>
-    <ul class="dlg-list">
-      <li><b>地図を表示するとき</b>　見ている場所の地図画像を OpenStreetMap から受け取ります。</li>
-      <li><b>地名を検索するとき</b>　入力した言葉と、表示中の地図のおおよその範囲を OpenStreetMap の検索サービスに送ります。</li>
-      <li><b>スタートとゴールを決めたとき、ルートを作るとき</b>　スタート、ゴール、寄り道地点の位置を FOSSGIS のルート検索サーバーに送ります。案内中にルートを大きく外れたときは、引き直すために現在地も送ります（設定で止められます）。</li>
-    </ul>
-    <p class="dlg-p">どのサービスにも接続元のIPアドレスが伝わり、送った内容は各サービスの記録に残ります。自宅をスタートにすると自宅の位置が送られます。気になる場合は、少し離れた場所をスタートにしてください。</p>
-    <p class="dlg-p">写真、メモ、設定、直近1回分の歩いた記録は、この端末の中にだけ保存されます。アプリの作者には何も送られず、広告や利用状況の計測もありません。</p>
-    <button class="btn primary" id="welcomeOk" type="button">同意してはじめる</button>
-    <p class="note">このあと位置情報の確認が出ます。現在地の表示と道案内に使います。</p>
-  </div>
-</dialog>
-
 <div class="toast" id="toast" role="status"></div>
 
-<script>/* Leaflet 1.9.4 https://leafletjs.com
-
-BSD 2-Clause License
-
-Copyright (c) 2010-2023, Volodymyr Agafonkin
-Copyright (c) 2010-2011, CloudMade
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+<script>/* Leaflet 1.9.4 (BSD-2-Clause) https://leafletjs.com */
 /* @preserve
  * Leaflet 1.9.4, a JS library for interactive maps. https://leafletjs.com
  * (c) 2010-2023 Vladimir Agafonkin, (c) 2010-2011 CloudMade
@@ -1240,7 +1076,6 @@ function geoMsg(e) {
   return '現在地を取得できませんでした';
 }
 function getHere() {
-  if (nav.on && nav.last) return Promise.resolve(nav.last);   // 案内中は、追いかけている最新の現在地を使う
   return new Promise((res, rej) => {
     if (!navigator.geolocation) return rej(new Error('この端末では位置情報が使えません'));
     navigator.geolocation.getCurrentPosition(p => res([p.coords.latitude, p.coords.longitude]),
@@ -1252,15 +1087,15 @@ function getHere() {
 const view = store.get('view', { c: [35.6812, 139.7671], z: 15 });
 const map = L.map('map', { zoomControl: false }).setView(view.c, view.z);
 let tileOk = 0, tileNg = 0, tileWarned = false;
-const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19, referrerPolicy: 'strict-origin-when-cross-origin', attribution: '地図・地名 &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | 経路 <a href="https://routing.openstreetmap.de/about.html">FOSSGIS OSRM</a> | <a href="https://www.openstreetmap.org/fixthemap">地図の誤りを報告</a>'
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19, attribution: '地図・地名 &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | 経路 <a href="https://routing.openstreetmap.de/about.html">FOSSGIS OSRM</a> | <a href="https://www.openstreetmap.org/fixthemap">地図の誤りを報告</a>'
 }).on('tileload', () => tileOk++).on('tileerror', () => {
   tileNg++;
   if (!tileWarned && tileOk === 0 && tileNg >= 4) {
     tileWarned = true;
     toast('地図の画像を読み込めません。通信状況を確認するか、Safari や Chrome で https:// のURLから開いてください', 8000);
   }
-});
+}).addTo(map);
 map.attributionControl.setPosition('topright');
 map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
 map.on('moveend', () => { const c = map.getCenter(); store.set('view', { c: [c.lat, c.lng], z: map.getZoom() }); });
@@ -1280,12 +1115,6 @@ function showMe(ll, acc, heading) {
   const el = meMarker.getElement(); if (!el) return;
   const cone = el.querySelector('.cone');
   if (heading != null && !isNaN(heading)) { cone.hidden = false; cone.style.transform = `rotate(${heading}deg)`; } else cone.hidden = true;
-}
-
-// 選んだ地点が下のパネルに隠れないよう、見えている範囲の中央に寄せて表示する
-function showPoint(ll, z) {
-  map.setView(ll, z, { animate: false });
-  if (!sheet.classList.contains('collapsed')) map.panBy([0, Math.max(0, sheet.offsetHeight / 2 - 40)], { animate: false });
 }
 
 /* ---------- シート・タブ ---------- */
@@ -1317,14 +1146,13 @@ function setPoint(kind, ll, label) {
   } else markers[kind].setLatLng(ll);
   if (kind === 'goal') markers.goal.setOpacity(S.loop ? 0 : 1);
   store.set(kind, S[kind]);
-  updateBounds();
   if (S.route && !nav.on) clearRoute();
 }
 
 document.querySelectorAll('[data-here]').forEach(b => b.onclick = async () => {
   const kind = b.dataset.here;
   b.disabled = true; const old = b.textContent; b.innerHTML = '<span class="spin"></span>';
-  try { const ll = await getHere(); setPoint(kind, ll, '現在地'); showPoint(ll, Math.max(map.getZoom(), 16)); showMe(ll); }
+  try { const ll = await getHere(); setPoint(kind, ll, '現在地'); map.setView(ll, Math.max(map.getZoom(), 16)); showMe(ll); }
   catch (e) { toast(e.message, 4000); }
   finally { b.disabled = false; b.textContent = old; }
 });
@@ -1348,45 +1176,30 @@ map.on('click', e => {
   else if (S.pick === 'photo') { endPick(); commitPhoto(ll); }
 });
 
-/* 地名検索（OpenStreetMap Nominatim）: 1秒に1回まで・自動補完なし・同じ検索は結果を使い回す */
-const nomCache = new Map(); let nomNext = 0, nomBusy = false;
-function showResults(kind, list) {
-  const ul = resEl[kind]; ul.hidden = false;
-  if (!list.length) { ul.innerHTML = '<li class="none">見つかりませんでした。別の言い方で試すか「地図」で選んでください。</li>'; return; }
-  ul.innerHTML = '';
-  list.forEach(it => {
-    const ll = [+it.lat, +it.lon]; if (!isFinite(ll[0]) || !isFinite(ll[1])) return;
-    const name = String(it.display_name || '');
-    const li = document.createElement('li'); const btn = document.createElement('button');
-    btn.textContent = name; btn.type = 'button';
-    btn.onclick = () => { setPoint(kind, ll, String(it.name || name.split(',')[0])); showPoint(ll, 16); };
-    li.append(btn); ul.append(li);
-  });
-}
+/* 地名検索（OpenStreetMap Nominatim） */
 async function search(kind) {
-  const q = inputs[kind].value.trim().slice(0, 100); const ul = resEl[kind];
+  const q = inputs[kind].value.trim(); const ul = resEl[kind];
   if (!q) return;
-  if (nomCache.has(q)) return showResults(kind, nomCache.get(q));
-  if (nomBusy) return;
-  nomBusy = true; ul.hidden = false; ul.innerHTML = '<li class="none">検索しています…</li>';
+  ul.hidden = false; ul.innerHTML = '<li class="none">検索しています…</li>';
   try {
-    const now = Date.now(), at = Math.max(now, nomNext); nomNext = at + 1100;
-    if (at > now) await new Promise(r => setTimeout(r, at - now));
-    // 地図の範囲は約1km単位で外側に丸めて送る（細かい位置を伝えないため）
-    const b = map.getBounds(), dn = v => (Math.floor(v * 100) / 100).toFixed(2), up = v => (Math.ceil(v * 100) / 100).toFixed(2);
+    const b = map.getBounds();
     const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=ja&q=' + encodeURIComponent(q) +
-      `&viewbox=${dn(b.getWest())},${up(b.getNorth())},${up(b.getEast())},${dn(b.getSouth())}`;
+      `&viewbox=${b.getWest()},${b.getNorth()},${b.getEast()},${b.getSouth()}`;
     const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
     if (!r.ok) throw new Error();
     const list = await r.json();
-    if (!Array.isArray(list)) throw new Error();
-    if (nomCache.size > 50) nomCache.clear();
-    nomCache.set(q, list); showResults(kind, list);
-  } catch { ul.innerHTML = '<li class="none">検索できませんでした。少し待ってからもう一度試してください。</li>'; }
-  finally { nomBusy = false; }
+    if (!list.length) { ul.innerHTML = '<li class="none">見つかりませんでした。別の言い方で試すか「地図」で選んでください。</li>'; return; }
+    ul.innerHTML = '';
+    list.forEach(it => {
+      const li = document.createElement('li'); const btn = document.createElement('button');
+      btn.textContent = it.display_name; btn.type = 'button';
+      btn.onclick = () => { const ll = [+it.lat, +it.lon]; setPoint(kind, ll, it.name || it.display_name.split(',')[0]); map.setView(ll, 16); };
+      li.append(btn); ul.append(li);
+    });
+  } catch { ul.innerHTML = '<li class="none">検索できませんでした。通信状況を確認してください。</li>'; }
 }
 ['start', 'goal'].forEach(k => {
-  inputs[k].addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); search(k); } });
+  inputs[k].addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); search(k); } });
   inputs[k].addEventListener('change', () => { if (S[k] && inputs[k].value !== S[k].label) search(k); });
 });
 
@@ -1397,60 +1210,8 @@ function applyLoop() {
   $('#goalField').hidden = S.loop;
   if (markers.goal) markers.goal.setOpacity(S.loop ? 0 : 1);
   if (S.route && !nav.on) clearRoute();
-  updateBounds();
 }
 loopIn.checked = S.loop; loopIn.onchange = applyLoop;
-
-/* 最大移動距離の下限: スタートとゴールが別の場所なら、歩ける最短距離より短くは選べないようにする。
-   最短距離はルート検索サーバーに1回だけ問い合わせて調べ、届くまで（または調べられないとき）は直線距離を下限にする */
-const MAX_KM = 15;
-const short = { key: '', d: null, route: null, state: 'idle', timer: null, known: new Map() };
-let started = false;                       // 説明に同意して使い始めたか（それまでは外部に送らない）
-const pairKey = () => (!S.loop && S.start && S.goal) ? [...S.start.ll, ...S.goal.ll].map(v => v.toFixed(5)).join(',') : '';
-function lowerM() {                        // いま分かっている下限（メートル）
-  const key = pairKey(); if (!key) return 0;
-  return short.key === key && short.d != null ? short.d : dist(S.start.ll, S.goal.ll);
-}
-function setShortest(key, route) {
-  short.known.set(key, route); if (short.known.size > 30) short.known.delete(short.known.keys().next().value);
-  if (pairKey() === key) { short.key = key; short.d = route.distance; short.route = route; short.state = 'done'; }
-}
-function updateBounds() {
-  const key = pairKey(), hint = $('#minHint');
-  clearTimeout(short.timer);
-  if (!key) { short.key = ''; short.d = null; short.route = null; short.state = 'idle'; maxIn.min = 0.5; hint.hidden = true; applyMax(); return; }
-  if (short.key !== key) {
-    short.key = key; short.d = null; short.route = null; short.state = 'idle';
-    if (short.known.has(key)) setShortest(key, short.known.get(key));
-    else if (started && dist(S.start.ll, S.goal.ll) <= MAX_KM * 1000) {
-      short.state = 'pending';
-      const from = S.start.ll, to = S.goal.ll;
-      short.timer = setTimeout(async () => {          // ピンを動かしている間は待ち、止まってから1回だけ調べる
-        const giveUp = setTimeout(() => { if (short.key === key && short.state === 'pending') { short.state = 'slow'; updateBounds(); } }, 5000);
-        try { const r = await osrm([from, to]); setShortest(key, r); }
-        catch { if (short.key === key && short.d == null) short.state = 'failed'; }
-        clearTimeout(giveUp);
-        if (short.key === key) updateBounds();
-      }, 700);
-    }
-  }
-  const low = lowerM(), lowKm = Math.max(0.5, Math.ceil(low / 100 - 1e-6) / 10), direct = dist(S.start.ll, S.goal.ll);
-  hint.hidden = false; hint.className = 'note';
-  if (lowKm > MAX_KM) {
-    hint.className = 'alert';
-    hint.textContent = `スタートとゴールが離れすぎています（${short.d != null ? '歩いて最短' : '直線で'}${fmtDist(low)}）。${MAX_KM} km 以内で歩ける場所を選び直してください。`;
-    maxIn.min = MAX_KM; applyMax(); return;
-  }
-  const raised = +maxIn.value < lowKm - 1e-9;
-  maxIn.min = lowKm; if (raised) maxIn.value = lowKm;
-  applyMax();
-  hint.textContent = short.d != null
-    ? `ゴールまで歩いて最短${fmtDist(low)}です。これより短くは選べません。`
-    : short.state === 'pending'
-      ? `ゴールまで直線で${fmtDist(direct)}です。歩ける最短距離を調べています…`
-      : `ゴールまで直線で${fmtDist(direct)}です。これより短くは選べません。`;
-  if (raised && S.route && !nav.on) clearRoute();
-}
 function applyMax() {
   S.maxKm = +maxIn.value; store.set('maxKm', S.maxKm);
   $('#maxVal').textContent = S.maxKm.toFixed(1);
@@ -1469,7 +1230,7 @@ async function osrmWait() {
 }
 async function osrm(points, straight = false) {
   await osrmWait();
-  const coords = points.map(p => p[1].toFixed(5) + ',' + p[0].toFixed(5)).join(';');
+  const coords = points.map(p => p[1].toFixed(6) + ',' + p[0].toFixed(6)).join(';');
   const url = `https://routing.openstreetmap.de/routed-foot/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true&continue_straight=${straight ? 'true' : 'false'}`;
   const r = await fetch(url);
   if (!r.ok) throw new Error('ルート検索サーバーに接続できませんでした（' + r.status + '）');
@@ -1552,8 +1313,11 @@ async function makeRoute() {
   if (!S.start) { err.textContent = 'スタート地点を決めてください（現在地・地図・検索のどれでも選べます）'; err.hidden = false; return; }
   if (!S.loop && !S.goal) { err.textContent = 'ゴール地点を決めるか、「スタートに戻ってくる」にチェックを入れてください'; err.hidden = false; return; }
   const start = S.start.ll, goal = S.loop ? S.start.ll : S.goal.ll;
-  const maxM = S.maxKm * 1000, direct = dist(start, goal), key = pairKey();
-  if (key && lowerM() > MAX_KM * 1000) { err.textContent = $('#minHint').textContent; err.hidden = false; return; }
+  const maxM = S.maxKm * 1000, direct = dist(start, goal);
+  if (direct * 1.15 > maxM) {
+    err.textContent = `スタートとゴールが直線で${fmtDist(direct)}離れています。最大移動距離を${Math.ceil(direct * 1.4 / 500) / 2} km 以上にしてください。`;
+    err.hidden = false; return;
+  }
   making = true;
   const btn = $('#btnMake'), btn2 = $('#btnAgain'); const html = btn.innerHTML;
   btn.disabled = btn2.disabled = true; btn.innerHTML = '<span class="spin"></span> 道を探しています…';
@@ -1575,19 +1339,7 @@ async function makeRoute() {
   }
 
   try {
-    // 片道のときは、まず歩ける最短距離を確かめる（まだ分かっていなければここで1回調べる）
-    let shortest = null;
-    if (key) {
-      if (!(short.key === key && short.route)) setShortest(key, await osrm([start, goal]));
-      shortest = short.route;
-      if (shortest.distance > maxM + .5) {
-        updateBounds();        // 下限を最短距離に合わせ、最大移動距離も引き上げる
-        throw new Error(`ゴールまで歩いて最短${fmtDist(shortest.distance)}あるので、最大移動距離を ${S.maxKm.toFixed(1)} km に引き上げました。もう一度「ランダムにルートを作る」を押してください。`);
-      }
-      updateBounds();
-    }
-    const tight = shortest && maxM < shortest.distance * 1.1;      // 寄り道する余裕がほとんどない
-    for (let round = 0; round < 5 && !tight; round++) {
+    for (let round = 0; round < 5; round++) {
       const res = await Promise.allSettled([candidate()]);
       let failed = 0;
       res.forEach(x => {
@@ -1599,7 +1351,10 @@ async function makeRoute() {
       if (best && best._ov.ratio <= .04 && best.distance >= maxM * .7) break;
     }
     S.detour = factor;
-    if (!best && shortest && shortest.distance <= maxM + .5) { best = shortest; note = '寄り道できる余裕がなかったので、最短のルートになりました。'; }
+    if (!best && !S.loop) {
+      const r = await osrm([start, goal]);
+      if (r.distance <= maxM) { best = r; note = '寄り道できる余裕がなかったので、最短に近いルートになりました。'; }
+    }
     if (!best) throw lastErr || new Error('最大移動距離に収まるルートが作れませんでした。距離を長くするか、地点を変えてみてください。');
     setRoute(best, start, goal, note);
   } catch (e) {
@@ -1647,6 +1402,8 @@ function setRoute(r, start, goal, note) {
   routeLayer.clearLayers();
   L.polyline(coords, { color: '#ffffff', weight: 10, opacity: .95, lineJoin: 'round' }).addTo(routeLayer);
   L.polyline(coords, { color: '#1f5fd1', weight: 5.5, lineJoin: 'round' }).addTo(routeLayer);
+  const ov = overlapInfo(coords);
+  ov.runs.forEach(run => L.polyline(run, { color: '#e8730c', weight: 6, opacity: .95, lineCap: 'round', interactive: false }).addTo(routeLayer));
   // 進む向きの目印
   for (let s = 250; s < total - 100; s += 400) {
     let i = cum.findIndex(c => c >= s); if (i < 1) continue;
@@ -1654,25 +1411,26 @@ function setRoute(r, start, goal, note) {
     L.marker(coords[i], { interactive: false, icon: L.divIcon({ className: '', iconSize: [14, 14], iconAnchor: [7, 7],
       html: `<svg width="14" height="14" viewBox="0 0 14 14" style="transform:rotate(${b}deg)"><path d="M3 10l4-6 4 6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>` }) }).addTo(routeLayer);
   }
+  map.fitBounds(L.latLngBounds(coords), sheetPad());
 
   const maxM = S.maxKm * 1000;
   $('#sumDist').textContent = fmtDist(total);
   $('#sumTime').textContent = fmtMin(total);
-  $('#sumLeft').textContent = fmtDist(Math.max(0, maxM - total));
-  $('#routeNote').textContent = (note ? note + ' ' : '') + '気に入らなければ「別のルート」を押してください。';
+  const pct = Math.round(ov.ratio * 100);
+  $('#sumOverlap').textContent = pct <= 2 ? 'ほぼなし' : pct + '%';
+  const ovText = pct <= 2 ? '同じ道をほとんど通らないルートです。' : `同じ道を2回通る区間が約${pct}%あります（地図のオレンジの線）。`;
+  $('#routeNote').textContent = (note ? note + ' ' : '') + `${ovText}上限 ${S.maxKm.toFixed(1)} km まであと ${fmtDist(Math.max(0, maxM - total))}。気に入らなければ「別のルート」を押してください。`;
   $('#routeInfo').hidden = false;
   renderNavPanel();
-  map.fitBounds(L.latLngBounds(coords), sheetPad());   // パネルの高さが決まってから、見えている範囲にルートを収める
 }
 function clearRoute() {
   S.route = null; routeLayer.clearLayers(); $('#routeInfo').hidden = true; renderNavPanel();
 }
 
 /* ---------- GPS案内 ---------- */
-const nav = { on: false, watch: null, idx: 0, off: 0, offMute: 0, spoken: new Set(), track: [], walked: 0, follow: true, wake: null, t0: 0, timer: null, last: null, rerouting: false, far: 0, autoNext: 0 };
+const nav = { on: false, watch: null, idx: 0, off: 0, offMute: 0, spoken: new Set(), track: [], walked: 0, follow: true, wake: null, t0: 0, timer: null, last: null, rerouting: false };
 
 function renderNavPanel() {
-  renderWalk();
   const has = !!S.route;
   $('#navNone').hidden = has; $('#navReady').hidden = !has;
   if (!has) return;
@@ -1696,17 +1454,15 @@ function startNav() {
   if (!S.route) return;
   if (!navigator.geolocation) { toast('この端末では位置情報が使えません'); return; }
   if (!window.isSecureContext) { toast('GPS案内は https:// で開いたページでのみ使えます', 4000); return; }
-  Object.assign(nav, { on: true, idx: 0, off: 0, offMute: 0, far: 0, autoNext: 0, spoken: new Set(), track: [], walked: 0, follow: true, t0: Date.now(), last: null });
-  walk = { t0: nav.t0, t1: null, dist: 0, pts: nav.track }; saveWalk();
+  Object.assign(nav, { on: true, idx: 0, off: 0, offMute: 0, spoken: new Set(), track: [], walked: 0, follow: true, t0: Date.now(), last: null });
   trackLayer.setLatLngs([]);
-  say('案内を始めます。画面を見るときは、立ち止まってください');
-  toast('画面を見るときは立ち止まり、車や自転車に気をつけてください', 5000);
+  say('案内を始めます');
   nav.watch = navigator.geolocation.watchPosition(onPos, e => {
     $('#hudInstr').textContent = geoMsg(e);
     if (e.code === 1) stopNav(false);
   }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 30000 });
   keepAwake();
-  $('#hud').hidden = false; $('#topbar').hidden = true; document.body.classList.add('navving');
+  $('#hud').hidden = false; $('#topbar').hidden = true;
   $('#btnFollow').hidden = false; $('#btnFollow').classList.add('on');
   $('#hudInstr').textContent = '現在地を取得しています…'; $('#hudDist').textContent = '--';
   nav.timer = setInterval(() => {
@@ -1719,9 +1475,8 @@ function startNav() {
 function stopNav(showSummary = true) {
   if (nav.watch != null) navigator.geolocation.clearWatch(nav.watch);
   nav.watch = null; nav.on = false; clearInterval(nav.timer);
-  if (walk && walk.pts === nav.track && !walk.t1) { walk.t1 = Date.now(); walk.dist = nav.walked; saveWalk(); }
   try { nav.wake && nav.wake.release(); } catch {} nav.wake = null;
-  $('#hud').hidden = true; $('#topbar').hidden = false; $('#btnFollow').hidden = true; document.body.classList.remove('navving');
+  $('#hud').hidden = true; $('#topbar').hidden = false; $('#btnFollow').hidden = true;
   if (!banner.classList.contains('pick')) banner.hidden = true;
   if (showSummary && nav.walked > 0) toast(`おつかれさまでした。${fmtDist(nav.walked)}歩きました`, 4000);
   renderNavPanel(); sheet.classList.remove('collapsed');
@@ -1759,10 +1514,7 @@ function onPos(p) {
   // 歩いた軌跡
   if (acc <= 50) {
     const prev = nav.track[nav.track.length - 1];
-    if (!prev || dist(prev, here) > 4) {
-      if (prev) nav.walked += dist(prev, here); nav.track.push(here); trackLayer.setLatLngs(nav.track);
-      if (walk) { walk.dist = nav.walked; if (nav.track.length % 20 === 0) saveWalk(); }
-    }
+    if (!prev || dist(prev, here) > 4) { if (prev) nav.walked += dist(prev, here); nav.track.push(here); trackLayer.setLatLngs(nav.track); }
   }
   nav.last = here;
   showMe(here, acc, heading);
@@ -1798,29 +1550,7 @@ function onPos(p) {
 
   // ルートを外れた
   if (pos.d > Math.max(40, acc * 1.2)) nav.off++; else { nav.off = 0; if (banner.dataset.kind === 'off') banner.hidden = true; }
-  // 大きく外れた（60m以上が4回続いた）ときは自動で引き直す。位置の精度が悪いときは誤判定を避けて待つ
-  if ($('#inAuto').checked && acc <= 50 && pos.d > Math.max(60, acc * 1.5)) nav.far++; else nav.far = 0;
-  const now = Date.now();
-  if (nav.far >= 4 && now > nav.offMute && now > nav.autoNext) { reroute(true); return; }
-  if (nav.off >= 3 && now > nav.offMute && banner.hidden) showOffRoute(here);
-}
-
-// 現在地からゴールまでの道に引き直す（auto: 自動のとき）
-async function reroute(auto) {
-  if (nav.rerouting || !S.route || !nav.last) return;
-  nav.rerouting = true; nav.far = 0; nav.autoNext = Date.now() + 30000;   // 自動の引き直しは30秒に1回まで
-  if (auto) { say('ルートを外れたので、引き直します'); toast('ルートを外れたので、ここからゴールまでの道に引き直します', 4000); }
-  try {
-    const from = nav.last, goal = S.route.goal;
-    const r = await osrm([from, goal]);
-    if (!nav.on) return;
-    setRoute(r, from, goal, 'ルートを外れたので、現在地からゴールまでの最短の道に引き直しました。歩く距離の合計は、最初に決めた上限を超えることがあります。');
-    nav.idx = 0; nav.off = 0; nav.spoken = new Set();
-    if (banner.dataset.kind === 'off') banner.hidden = true;
-    say('ルートを引き直しました');
-  } catch (e) {
-    toast(auto ? 'ルートを引き直せませんでした。通信状況を確認してください' : e.message, 4000);
-  } finally { nav.rerouting = false; }
+  if (nav.off >= 3 && Date.now() > nav.offMute && banner.hidden) showOffRoute(here);
 }
 
 function showOffRoute(here) {
@@ -1828,7 +1558,17 @@ function showOffRoute(here) {
   banner.innerHTML = `<p>ルートから外れているようです</p><div class="row"><button class="btn ghost" id="offKeep">このまま歩く</button><button class="btn primary" id="offRe">ここから引き直す</button></div>`;
   say('ルートから外れています');
   $('#offKeep').onclick = () => { banner.hidden = true; nav.offMute = Date.now() + 90000; };
-  $('#offRe').onclick = () => { $('#offRe').innerHTML = '<span class="spin"></span>'; reroute(false); };
+  $('#offRe').onclick = async () => {
+    if (nav.rerouting) return; nav.rerouting = true;
+    $('#offRe').innerHTML = '<span class="spin"></span>';
+    try {
+      const goal = S.route.goal;
+      const r = await osrm([nav.last || here, goal]);
+      setRoute(r, nav.last || here, goal, 'ルートを外れたので、現在地からゴールまでの道に引き直しました。');
+      nav.idx = 0; nav.off = 0; nav.spoken = new Set(); banner.hidden = true;
+      say('ルートを引き直しました');
+    } catch (e) { toast(e.message); } finally { nav.rerouting = false; }
+  };
 }
 
 function arrive() {
@@ -1836,9 +1576,8 @@ function arrive() {
   say(S.loop ? 'スタート地点に戻ってきました。おつかれさまでした' : 'ゴールに到着しました。おつかれさまでした');
   stopNav(false);
   banner.className = 'banner'; banner.dataset.kind = 'arrive'; banner.hidden = false;
-  banner.innerHTML = `<p>到着しました。${fmtDist(walked)}を${mins}分で歩きました</p><div class="row"><button class="btn ghost" id="arrOk">閉じる</button><button class="btn ghost" id="arrShare">動画で共有</button><button class="btn primary" id="arrPhoto">写真を残す</button></div>`;
+  banner.innerHTML = `<p>到着しました。${fmtDist(walked)}を${mins}分で歩きました</p><div class="row"><button class="btn ghost" id="arrOk">閉じる</button><button class="btn primary" id="arrPhoto">写真を残す</button></div>`;
   $('#arrOk').onclick = () => banner.hidden = true;
-  $('#arrShare').onclick = () => { banner.hidden = true; window.dispatchEvent(new Event('sanpo:share')); };
   $('#arrPhoto').onclick = () => { banner.hidden = true; showTab('photo'); $('#fileIn').click(); };
 }
 
@@ -1957,7 +1696,7 @@ function openPhotoDialog() {
   const ch = [];
   if (pending.exif.ll) ch.push(['exif', '写真に記録された場所', fmtLL(pending.exif.ll)]);
   ch.push(['here', 'いまいる場所（現在地）', '']);
-  if (nav.last && !nav.on) ch.push(['last', '案内中に最後にいた場所', '']);
+  if (nav.last) ch.push(['last', '案内中に最後にいた場所', '']);
   ch.push(['map', '地図で選ぶ', '']);
   $('#locChoices').innerHTML = ch.map((c, i) => `<label><input type="radio" name="loc" value="${c[0]}" ${i === 0 ? 'checked' : ''}> ${c[1]}<small>${c[2]}</small></label>`).join('');
   $('#photoDlg').showModal();
@@ -1991,7 +1730,7 @@ async function commitPhoto(ll) {
 }
 
 function addPhotoMarker(rec) {
-  const m = L.marker([rec.lat, rec.lng], { icon: L.divIcon({ className: '', html: `<div class="ph-icon"><img src="${esc(rec.thumb)}" alt=""></div>`, iconSize: [46, 46], iconAnchor: [23, 23], popupAnchor: [0, -24] }) });
+  const m = L.marker([rec.lat, rec.lng], { icon: L.divIcon({ className: '', html: `<div class="ph-icon"><img src="${rec.thumb}" alt=""></div>`, iconSize: [46, 46], iconAnchor: [23, 23], popupAnchor: [0, -24] }) });
   let url = null;
   m.bindPopup(() => {
     url = URL.createObjectURL(rec.blob);
@@ -2012,11 +1751,11 @@ function addPhotoMarker(rec) {
 function renderPhotos() {
   const g = $('#photoGrid'); g.innerHTML = '';
   const list = [...photos].sort((a, b) => b.takenAt - a.takenAt);
-  $('#photoCount').textContent = `${list.length}枚`; renderWalk();
+  $('#photoCount').textContent = `${list.length}枚`;
   $('#photoEmpty').hidden = list.length > 0;
   list.forEach(rec => {
     const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', fmtDate(rec.takenAt) + 'の写真');
-    b.innerHTML = `<img src="${esc(rec.thumb)}" alt="">`;
+    b.innerHTML = `<img src="${rec.thumb}" alt="">`;
     b.onclick = () => {
       sheet.classList.add('collapsed');
       if (!map.hasLayer(photoLayer)) togglePhotos();
@@ -2047,405 +1786,24 @@ $('#btnExport').onclick = async () => {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 };
 $('#btnImport').onclick = () => $('#importIn').click();
-const IMG_RE = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/;
-function dataToBlob(d) {
-  const m = typeof d === 'string' && IMG_RE.exec(d); if (!m) return null;
-  const bin = atob(m[2]), u = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
-  return new Blob([u], { type: m[1] });
-}
 $('#importIn').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
     const data = JSON.parse(await f.text());
-    if (!data || data.app !== 'sanpo-michi' || !Array.isArray(data.photos)) throw new Error();
-    let n = 0, skipped = 0;
-    for (const p of data.photos.slice(0, 2000)) {
-      if (!p || typeof p !== 'object') { skipped++; continue; }
-      const id = typeof p.id === 'string' && /^[a-z0-9]{4,40}$/i.test(p.id) ? p.id : null;
-      const lat = Number(p.lat), lng = Number(p.lng), blob = dataToBlob(p.image);
-      if (!id || !blob || !isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) { skipped++; continue; }
-      if (photoMarkers.has(id)) continue;
-      let th = typeof p.thumb === 'string' && IMG_RE.test(p.thumb) ? p.thumb : null;
-      if (!th) { try { th = thumb(await loadImg(blob)); } catch { skipped++; continue; } }
-      const t = Number(p.takenAt), c = Number(p.createdAt);
-      const rec = { id, lat, lng, note: String(p.note || '').slice(0, 2000), takenAt: isFinite(t) && t > 0 ? t : Date.now(), createdAt: isFinite(c) && c > 0 ? c : Date.now(), blob, thumb: th };
+    if (!data || !Array.isArray(data.photos)) throw new Error();
+    let n = 0;
+    for (const p of data.photos) {
+      if (photoMarkers.has(p.id) || !p.image) continue;
+      const blob = await (await fetch(p.image)).blob();
+      const rec = { id: p.id, lat: +p.lat, lng: +p.lng, note: p.note || '', takenAt: p.takenAt || Date.now(), createdAt: p.createdAt || Date.now(), blob, thumb: p.thumb };
       await PDB.put(rec); photos.push(rec); addPhotoMarker(rec); n++;
     }
-    renderPhotos(); toast(`${n}枚の写真を読み込みました` + (skipped ? `（読めなかった写真 ${skipped}枚）` : ''), 4000);
+    renderPhotos(); toast(`${n}枚の写真を読み込みました`);
     if (n && photos.length) map.fitBounds(L.latLngBounds(photos.map(p => [p.lat, p.lng])), sheetPad());
   } catch { toast('このファイルは読み込めませんでした。さんぽみちで書き出したファイルを選んでください', 4500); }
 };
 
-/* 使い方の動画（ボタンを押したときに初めて読み込む） */
-{
-  const dlg = $('#howtoDlg'), v = $('#howtoVideo'), er = $('#howtoErr');
-  $('#btnHowto').onclick = () => {
-    er.hidden = true; v.hidden = false;
-    if (!v.getAttribute('src')) v.src = 'sanpomichi-howto.mp4';
-    dlg.showModal();
-    v.play().catch(() => {});
-  };
-  v.addEventListener('error', () => { v.hidden = true; er.hidden = false; v.removeAttribute('src'); });
-  dlg.addEventListener('close', () => { try { v.pause(); } catch {} });
-  $('#howtoClose').onclick = () => dlg.close();
-  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
-}
-
-/* 保存したデータをすべて消す */
-$('#btnErase').onclick = async function () {
-  if (!this.dataset.armed) {
-    this.dataset.armed = '1'; this.textContent = 'もう一度押すと、写真と設定をすべて消します';
-    setTimeout(() => { delete this.dataset.armed; this.textContent = '保存したデータをすべて消す'; }, 6000);
-    return;
-  }
-  try { Object.keys(localStorage).filter(k => k.startsWith('sanpo:')).forEach(k => localStorage.removeItem(k)); } catch {}
-  try {
-    (await PDB.open()).close();
-    await new Promise(r => { const q = indexedDB.deleteDatabase('sanpo-photos'); q.onsuccess = q.onerror = q.onblocked = () => r(); });
-  } catch {}
-  location.reload();
-};
-
-/* 公開元へのリンク（GitHub Pages で開いているときだけ出す） */
-{
-  const m = /^([a-z0-9-]+)\.github\.io$/i.exec(location.hostname);
-  if (m) {
-    const seg = location.pathname.split('/').filter(Boolean)[0];
-    const repo = seg && !/\.html?$/i.test(seg) ? seg : location.hostname;
-    const a = $('#srcLink'); a.href = `https://github.com/${m[1]}/${encodeURIComponent(repo)}`; $('#srcRow').hidden = false;
-  }
-}
-
-/* ---------- 散歩の記録と、共有用の動画 ---------- */
-// 直近1回分の歩いた軌跡を端末に残し、端末の中だけで動画にする（どこにも送信しない）
-let walk = null;
-function saveWalk() {
-  if (!walk) return;
-  store.set('walk', { t0: walk.t0, t1: walk.t1, dist: Math.round(walk.dist), pts: walk.pts.map(p => [+p[0].toFixed(5), +p[1].toFixed(5)]) });
-}
-function loadWalk() {
-  const w = store.get('walk', null);
-  if (!w || !Array.isArray(w.pts)) return;
-  const pts = w.pts.filter(p => Array.isArray(p) && isFinite(p[0]) && isFinite(p[1]) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180).slice(0, 20000).map(p => [+p[0], +p[1]]);
-  if (pts.length >= 2) walk = { t0: +w.t0 || Date.now(), t1: +w.t1 || +w.t0 || Date.now(), dist: +w.dist || 0, pts };
-}
-function walkPhotos() {
-  if (!walk) return [];
-  const end = (walk.t1 || Date.now()) + 15 * 60000;
-  return photos.filter(p => p.createdAt >= walk.t0 - 60000 && p.createdAt <= end);
-}
-function walkMinutes() { return Math.max(1, Math.round(((walk.t1 || Date.now()) - walk.t0) / 60000)); }
-function renderWalk() {
-  const ok = !!walk && walk.pts.length >= 2 && !nav.on;
-  $('#walkBox').hidden = !ok;
-  if (!ok) return;
-  const d = new Date(walk.t0);
-  $('#walkInfo').textContent = `${d.getMonth() + 1}月${d.getDate()}日　${fmtDist(walk.dist)}・${walkMinutes()}分・写真${walkPhotos().length}枚`;
-}
-
-const VW = 720, VH = 1280;
-const VFONT = '"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Noto Sans JP",system-ui,sans-serif';
-const mercX = (lng, z) => (lng + 180) / 360 * 256 * 2 ** z;
-const mercY = (lat, z) => { const s = Math.sin(toRad(lat)); return (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * 256 * 2 ** z; };
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const lerp = (a, b, t) => a + (b - a) * t;
-const ease = t => t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
-
-function pickMime() {
-  if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return null;
-  for (const m of ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']) {
-    try { if (MediaRecorder.isTypeSupported(m)) return m; } catch {}
-  }
-  return null;
-}
-function rrect(c, x, y, w, h, r) {
-  c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
-}
-
-// 動画の材料（道のり・地図・写真）をそろえて、時刻 t の1コマを描く関数を返す
-async function buildScene(opt, onStatus) {
-  // 1. 道のり: 間引き → 両端を隠す
-  let pts = [walk.pts[0]];
-  for (const p of walk.pts) if (dist(pts[pts.length - 1], p) >= 5) pts.push(p);
-  if (pts.length < 2) pts = [walk.pts[0], walk.pts[walk.pts.length - 1]];
-  let cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + dist(pts[i - 1], pts[i]));
-  if (opt.hideEnds) {
-    const L = cum[cum.length - 1], cut = Math.min(150, L * .2);
-    const at = s => { let i = cum.findIndex(v => v >= s); if (i < 1) i = 1; const f = (s - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1); return [lerp(pts[i - 1][0], pts[i][0], f), lerp(pts[i - 1][1], pts[i][1], f)]; };
-    if (L - 2 * cut > 30) {
-      const inner = pts.filter((p, i) => cum[i] > cut && cum[i] < L - cut);
-      pts = [at(cut), ...inner, at(L - cut)];
-      cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + dist(pts[i - 1], pts[i]));
-    }
-  }
-  const len = cum[cum.length - 1] || 1;
-
-  // 2. 全体が収まる縮尺を決める
-  const xs = pts.map(p => mercX(p[1], 0)), ys = pts.map(p => mercY(p[0], 0));
-  const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
-  const BOX = { w: 540, h: 760, cx: VW / 2, cy: 610 };
-  const zf = Math.min(Math.log2(BOX.w / Math.max(maxx - minx, 1e-9)), Math.log2(BOX.h / Math.max(maxy - miny, 1e-9)), 17.6);
-  let z = Math.min(18, Math.ceil(zf)), k0 = 2 ** (zf - z);
-  if (k0 < .75 && z > 1) { z--; k0 *= 2; }
-  const bw = Math.ceil(VW / k0), bh = Math.ceil(VH / k0);
-  const X0 = (minx + maxx) / 2 * 2 ** z - BOX.cx / k0, Y0 = (miny + maxy) / 2 * 2 ** z - BOX.cy / k0;
-  const P = pts.map(p => ({ x: mercX(p[1], z) - X0, y: mercY(p[0], z) - Y0 }));
-
-  // 3. 背景の地図（見えている範囲の分だけ読み込む。失敗したら無地にする）
-  const base = document.createElement('canvas'); base.width = bw; base.height = bh;
-  const bc = base.getContext('2d');
-  const plain = () => {
-    bc.fillStyle = '#eef0e6'; bc.fillRect(0, 0, bw, bh); bc.fillStyle = '#dfe4d8';
-    for (let x = 20; x < bw; x += 40) for (let y = 20; y < bh; y += 40) bc.fillRect(x, y, 3, 3);
-  };
-  let hasMap = false; plain();
-  if (opt.map) {
-    onStatus('地図を読み込んでいます…');
-    const jobs = [], n = 2 ** z;
-    for (let tx = Math.floor(X0 / 256); tx <= Math.floor((X0 + bw) / 256); tx++)
-      for (let ty = Math.floor(Y0 / 256); ty <= Math.floor((Y0 + bh) / 256); ty++)
-        if (ty >= 0 && ty < n) jobs.push({ tx, ty });
-    let okCount = 0;
-    const loadTile = j => new Promise(res => {
-      const im = new Image(); im.crossOrigin = 'anonymous'; im.referrerPolicy = 'strict-origin-when-cross-origin';
-      const timer = setTimeout(() => res(null), 8000);
-      im.onload = () => { clearTimeout(timer); res(im); }; im.onerror = () => { clearTimeout(timer); res(null); };
-      im.src = `https://tile.openstreetmap.org/${z}/${((j.tx % n) + n) % n}/${j.ty}.png`;
-    });
-    const queue = jobs.slice();
-    await Promise.all([0, 1, 2, 3].map(async () => {
-      while (queue.length) { const j = queue.shift(); const im = await loadTile(j); if (im) { okCount++; bc.drawImage(im, j.tx * 256 - X0, j.ty * 256 - Y0, 256, 256); } }
-    }));
-    hasMap = okCount >= jobs.length * .7;
-    if (hasMap) { try { bc.getImageData(0, 0, 1, 1); } catch { hasMap = false; } }
-    if (hasMap) { bc.fillStyle = 'rgba(255,255,255,.1)'; bc.fillRect(0, 0, bw, bh); }
-    else { base.width = bw; plain(); }      // 作り直して無地にする
-  }
-
-  // 4. 写真（歩いた順に並べる）
-  onStatus('写真を準備しています…');
-  const shots = [];
-  for (const ph of walkPhotos()) {
-    let bi = 0, bd = Infinity;
-    for (let i = 0; i < pts.length; i++) { const d = dist(pts[i], [ph.lat, ph.lng]); if (d < bd) { bd = d; bi = i; } }
-    try { shots.push({ s: cum[bi], p: P[bi], img: await loadImg(ph.blob), note: opt.notes ? ph.note : '' }); } catch {}
-  }
-  shots.sort((a, b) => a.s - b.s);
-  const hold = clamp(30 / Math.max(1, shots.length), 1.5, 3);
-
-  // 5. 進行表: 近づく → たどる（写真のたびに止まる）→ 全体を見せる
-  const TR = clamp(len / 250, 6, 14), clips = [];
-  clips.push({ dur: .9, f: u => ({ s: 0, cam: ease(u) }) });
-  let prev = 0;
-  shots.forEach((sh, i) => {
-    const a = prev, b = sh.s;
-    if (b - a > 1) clips.push({ dur: Math.max(.3, TR * (b - a) / len), f: u => ({ s: lerp(a, b, u), cam: 1 }) });
-    clips.push({ dur: hold, f: u => ({ s: b, cam: 1, shot: i, u }) });
-    prev = b;
-  });
-  { const a = prev; if (len - a > 1) clips.push({ dur: Math.max(.3, TR * (len - a) / len), f: u => ({ s: lerp(a, len, u), cam: 1 }) }); }
-  clips.push({ dur: 1.1, f: u => ({ s: len, cam: 1 - ease(u), fin: 0 }) });
-  clips.push({ dur: 3.4, f: u => ({ s: len, cam: 0, fin: Math.min(1, u * 5) }) });
-  const dur = clips.reduce((t, c) => t + c.dur, 0);
-  const CZ = clamp(1.8 / k0, 1.25, 1.8);
-  const d0 = new Date(walk.t0), title = `${d0.getMonth() + 1}月${d0.getDate()}日のお散歩`;
-  const mins = walkMinutes(), nPhotos = shots.length;
-
-  function headAt(s) {
-    let i = cum.findIndex(v => v >= s); if (i < 1) i = 1; if (i >= P.length) i = P.length - 1;
-    const f = clamp((s - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1), 0, 1);
-    return { i, x: lerp(P[i - 1].x, P[i].x, f), y: lerp(P[i - 1].y, P[i].y, f) };
-  }
-  function cover(c, img, x, y, w, h) {       // 画像を枠いっぱいに切り抜いて描く
-    const iw = img.naturalWidth, ih = img.naturalHeight, r = Math.max(w / iw, h / ih), sw = w / r, sh = h / r;
-    c.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, x, y, w, h);
-  }
-  function wrap(c, text, maxW, maxLines) {
-    const lines = []; let cur = '';
-    for (const ch of String(text).replace(/\s+/g, ' ')) {
-      if (c.measureText(cur + ch).width > maxW) { lines.push(cur); cur = ch; if (lines.length === maxLines) break; } else cur += ch;
-    }
-    if (lines.length < maxLines && cur) lines.push(cur);
-    else if (lines.length === maxLines) lines[maxLines - 1] = lines[maxLines - 1].slice(0, -1) + '…';
-    return lines;
-  }
-
-  function draw(c, t) {
-    let k = 0, tt = clamp(t, 0, dur - 1e-6);
-    while (k < clips.length - 1 && tt >= clips[k].dur) { tt -= clips[k].dur; k++; }
-    const st = clips[k].f(clamp(tt / clips[k].dur, 0, 1));
-    const cz = lerp(1, CZ, st.cam), S = k0 * cz, vw = VW / S, vh = VH / S, h = headAt(st.s);
-    const cx = clamp(lerp(bw / 2, h.x, st.cam), vw / 2, bw - vw / 2), cy = clamp(lerp(bh / 2, h.y, st.cam), vh / 2, bh - vh / 2);
-    const T = p => [(p.x - cx) * S + VW / 2, (p.y - cy) * S + VH / 2];
-    c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.shadowColor = 'transparent';
-    c.drawImage(base, cx - vw / 2, cy - vh / 2, vw, vh, 0, 0, VW, VH);
-
-    // 歩いた道
-    c.lineJoin = c.lineCap = 'round'; c.beginPath();
-    let q = T(P[0]); c.moveTo(q[0], q[1]);
-    for (let i = 1; i < h.i; i++) { q = T(P[i]); c.lineTo(q[0], q[1]); }
-    q = T(h); c.lineTo(q[0], q[1]);
-    c.strokeStyle = '#fff'; c.lineWidth = 15; c.stroke(); c.strokeStyle = '#1f8f5a'; c.lineWidth = 8; c.stroke();
-    q = T(P[0]); c.beginPath(); c.arc(q[0], q[1], 11, 0, 7); c.fillStyle = '#fff'; c.fill(); c.beginPath(); c.arc(q[0], q[1], 6, 0, 7); c.fillStyle = '#1f8f5a'; c.fill();
-
-    // 通り過ぎた写真の目印
-    shots.forEach((sh, i) => {
-      if (sh.s > st.s || (st.shot === i)) return;
-      const [x, y] = T(sh.p), w = 58;
-      c.save(); c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 10; c.shadowOffsetY = 3;
-      rrect(c, x - w / 2 - 4, y - w / 2 - 4, w + 8, w + 8, 14); c.fillStyle = '#fff'; c.fill(); c.restore();
-      c.save(); rrect(c, x - w / 2, y - w / 2, w, w, 10); c.clip(); cover(c, sh.img, x - w / 2, y - w / 2, w, w); c.restore();
-    });
-
-    // いまいる場所（最後はゴールの印）
-    q = T(h); c.beginPath(); c.arc(q[0], q[1], 15, 0, 7); c.fillStyle = '#fff'; c.fill();
-    c.beginPath(); c.arc(q[0], q[1], 9.5, 0, 7); c.fillStyle = st.fin != null ? '#c2410c' : '#1f5fd1'; c.fill();
-
-    // 上の帯: タイトルと歩いた距離
-    let g = c.createLinearGradient(0, 0, 0, 230); g.addColorStop(0, 'rgba(15,35,25,.72)'); g.addColorStop(1, 'rgba(15,35,25,0)');
-    c.fillStyle = g; c.fillRect(0, 0, VW, 230);
-    c.fillStyle = '#fff'; c.textBaseline = 'alphabetic'; c.textAlign = 'left'; c.font = `700 46px ${VFONT}`; c.fillText(title, 40, 104);
-    if (st.fin == null) { c.textAlign = 'right'; c.font = `700 40px ${VFONT}`; c.fillText(fmtDist(walk.dist * st.s / len), VW - 40, 104); }
-
-    // 写真を大きく見せる
-    if (st.shot != null) {
-      const sh = shots[st.shot], inT = .35 / hold, p = ease(clamp(Math.min(st.u / inT, (1 - st.u) / inT), 0, 1));
-      c.fillStyle = `rgba(10,20,15,${.5 * p})`; c.fillRect(0, 0, VW, VH);
-      const iw = sh.img.naturalWidth, ih = sh.img.naturalHeight, r = Math.min(600 / iw, 700 / ih), w = iw * r, hh = ih * r;
-      const [px, py] = T(sh.p), sc = lerp(58 / Math.max(w, hh), 1, p), x = lerp(px, VW / 2, p), y = lerp(py, VH / 2 - 30, p);
-      c.save(); c.translate(x, y); c.scale(sc, sc);
-      c.save(); c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = 40; c.shadowOffsetY = 12; rrect(c, -w / 2 - 14, -hh / 2 - 14, w + 28, hh + 28, 30); c.fillStyle = '#fff'; c.fill(); c.restore();
-      c.save(); rrect(c, -w / 2, -hh / 2, w, hh, 18); c.clip(); c.drawImage(sh.img, -w / 2, -hh / 2, w, hh); c.restore();
-      c.restore();
-      if (sh.note && p > .85) {
-        c.font = `700 32px ${VFONT}`; c.textAlign = 'center';
-        const lines = wrap(c, sh.note, 560, 2), top = VH / 2 - 30 + hh / 2 + 44, bwid = Math.max(...lines.map(l => c.measureText(l).width)) + 56;
-        c.globalAlpha = (p - .85) / .15; rrect(c, VW / 2 - bwid / 2, top, bwid, lines.length * 46 + 26, 22); c.fillStyle = 'rgba(15,35,25,.82)'; c.fill();
-        c.fillStyle = '#fff'; lines.forEach((l, i) => c.fillText(l, VW / 2, top + 48 + i * 46)); c.globalAlpha = 1;
-      }
-    }
-
-    // 最後のまとめ
-    if (st.fin) {
-      const a = ease(st.fin), y = VH - 330 + (1 - a) * 40;
-      c.globalAlpha = a; c.save(); c.shadowColor = 'rgba(0,0,0,.25)'; c.shadowBlur = 30; c.shadowOffsetY = 8; rrect(c, 40, y, VW - 80, 210, 32); c.fillStyle = 'rgba(255,255,255,.96)'; c.fill(); c.restore();
-      const cols = [['距離', fmtDist(walk.dist)], ['時間', mins >= 60 ? `${Math.floor(mins / 60)}時間${mins % 60}分` : `${mins}分`], ['写真', `${nPhotos}枚`]];
-      c.textAlign = 'center';
-      cols.forEach((col, i) => {
-        const x = 40 + (VW - 80) * (i + .5) / 3;
-        c.fillStyle = '#5d6e65'; c.font = `700 26px ${VFONT}`; c.fillText(col[0], x, y + 70);
-        c.fillStyle = '#1b2a22'; c.font = `700 ${col[1].length > 6 ? 40 : 54}px ${VFONT}`; c.fillText(col[1], x, y + 150);
-      });
-      c.globalAlpha = 1;
-    }
-
-    // 下の帯: 地図の出典とアプリ名
-    c.textBaseline = 'middle';
-    if (hasMap) {
-      c.font = `400 20px ${VFONT}`; c.textAlign = 'left'; const txt = '地図 © OpenStreetMap contributors', w = c.measureText(txt).width;
-      rrect(c, 24, VH - 62, w + 28, 38, 12); c.fillStyle = 'rgba(255,255,255,.85)'; c.fill(); c.fillStyle = '#1b2a22'; c.fillText(txt, 38, VH - 42);
-    }
-    c.font = `700 26px ${VFONT}`; c.textAlign = 'right'; c.lineWidth = 6; c.strokeStyle = 'rgba(15,35,25,.55)'; c.strokeText('さんぽみち', VW - 34, VH - 42); c.fillStyle = '#fff'; c.fillText('さんぽみち', VW - 34, VH - 42);
-  }
-  return { dur, draw, hasMap, photos: nPhotos };
-}
-
-// 画面に描きながら、そのまま動画として記録する
-async function recordScene(scene, canvas, mime, ctl, onProgress) {
-  const c = canvas.getContext('2d'); scene.draw(c, 0);
-  const stream = canvas.captureStream(30), chunks = [];
-  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
-  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-  const stopped = new Promise((res, rej) => { rec.onstop = res; rec.onerror = e => rej(e.error || new Error('record')); });
-  rec.start(250);
-  await new Promise(res => {
-    let t = 0, last = performance.now();
-    const tick = now => {
-      if (ctl.cancel) return res();
-      t += Math.min(.1, Math.max(0, (now - last) / 1000)); last = now;
-      scene.draw(c, Math.min(t, scene.dur)); onProgress(Math.min(1, t / scene.dur));
-      if (t >= scene.dur + .35) return res();
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  });
-  if (rec.state !== 'inactive') rec.stop();
-  await stopped; stream.getTracks().forEach(tr => tr.stop());
-  return ctl.cancel ? null : new Blob(chunks, { type: mime.split(';')[0] });
-}
-
-{
-  const dlg = $('#shareDlg'), canvas = $('#shareCanvas'), video = $('#shareVideo'), image = $('#shareImage');
-  let ctl = null, result = null, url = null;
-  const stage = name => ['Opt', 'Rec', 'Done'].forEach(n => $('#share' + n).hidden = n !== name);
-  const cleanup = () => { if (ctl) ctl.cancel = true; try { video.pause(); } catch {} video.removeAttribute('src'); image.removeAttribute('src'); if (url) { URL.revokeObjectURL(url); url = null; } result = null; };
-  function openShare() {
-    if (!walk || walk.pts.length < 2) return;
-    cleanup(); stage('Opt'); $('#shareErr').hidden = true;
-    const d = new Date(walk.t0);
-    $('#shareSum').textContent = `${d.getMonth() + 1}月${d.getDate()}日のお散歩（${fmtDist(walk.dist)}・写真${walkPhotos().length}枚）を、たどった順に見せる動画にします。`;
-    dlg.showModal();
-  }
-  window.addEventListener('sanpo:share', openShare);
-  $('#btnShare').onclick = openShare;
-  $('#shareCancel').onclick = $('#shareClose').onclick = $('#shareClose2').onclick = () => dlg.close();
-  dlg.addEventListener('close', cleanup);
-  dlg.addEventListener('cancel', cleanup);
-
-  $('#shareMake').onclick = async () => {
-    const opt = { hideEnds: $('#shHide').checked, map: $('#shMap').checked, notes: $('#shNotes').checked };
-    const my = ctl = { cancel: false }; let lock = null;
-    stage('Rec'); $('#shareStatus').textContent = '準備しています…'; $('#shareBar').style.width = '0%';
-    try {
-      try { if ('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen'); } catch {}
-      const scene = await buildScene(opt, m => { $('#shareStatus').textContent = m; });
-      if (my.cancel) return;
-      const mime = pickMime(), d = new Date(walk.t0), stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
-      let blob, ext;
-      if (mime) {
-        $('#shareStatus').textContent = `動画を作っています（約${Math.round(scene.dur)}秒）。この画面のままお待ちください`;
-        blob = await recordScene(scene, canvas, mime, my, p => { $('#shareBar').style.width = (p * 100).toFixed(1) + '%'; });
-        ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
-      } else {
-        scene.draw(canvas.getContext('2d'), scene.dur);
-        blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', .92)); ext = 'jpg';
-      }
-      if (my.cancel || !blob || !blob.size) { if (!my.cancel) throw new Error('empty'); return; }
-      result = new File([blob], `sanpo-${stamp}.${ext}`, { type: blob.type });
-      url = URL.createObjectURL(blob);
-      const isVideo = ext !== 'jpg';
-      video.hidden = !isVideo; image.hidden = isVideo;
-      if (isVideo) { video.src = url; video.play().catch(() => {}); } else image.src = url;
-      let canShare = false; try { canShare = !!(navigator.canShare && navigator.canShare({ files: [result] })); } catch {}
-      $('#shareGo').hidden = !canShare;
-      $('#shareFmt').hidden = ext === 'mp4';
-      $('#shareFmt').textContent = ext === 'mp4' ? '' : ext === 'webm'
-        ? 'この端末のブラウザでは WebM 形式の動画になります。Instagram では投稿できないことがあるので、その場合は iPhone の Safari か、新しい Chrome で作り直してください。'
-        : 'この端末のブラウザは動画の作成に対応していないため、最後の場面を画像にしました。';
-      $('#shareHow').textContent = canShare
-        ? '「共有する」を押すと端末の共有メニューが開きます。Instagram を選ぶと投稿の画面に進みます。出てこないときは「端末に保存する」で保存し、Instagram アプリから選んでください。'
-        : 'このブラウザからは直接共有できません。「端末に保存する」で保存し、Instagram などのアプリから選んで投稿してください。';
-      stage('Done');
-    } catch (e) {
-      if (!my.cancel) { stage('Opt'); $('#shareErr').hidden = false; }
-    } finally { try { lock && lock.release(); } catch {} }
-  };
-  $('#shareGo').onclick = async () => {
-    if (!result) return;
-    try { await navigator.share({ files: [result] }); }
-    catch (e) { if (!e || e.name !== 'AbortError') toast('共有できませんでした。「端末に保存する」を使ってください', 4000); }
-  };
-  $('#shareSave').onclick = () => {
-    if (!result || !url) return;
-    const a = document.createElement('a'); a.href = url; a.download = result.name; document.body.append(a); a.click(); a.remove();
-    toast('保存を始めました。保存先（ファイルアプリなど）を確認してください', 4000);
-  };
-}
-
 /* ---------- 起動 ---------- */
-$('#inAuto').checked = store.get('auto', true); $('#inAuto').onchange = e => store.set('auto', e.target.checked);
-loadWalk();
 applyLoop(); applyMax();
 const sStart = store.get('start', null), sGoal = store.get('goal', null);
 if (sStart && sStart.ll) setPoint('start', sStart.ll, sStart.label);
@@ -2453,19 +1811,8 @@ if (sGoal && sGoal.ll) setPoint('goal', sGoal.ll, sGoal.label);
 renderNavPanel();
 PDB.all().then(list => { photos = list || []; photos.forEach(addPhotoMarker); renderPhotos(); }).catch(() => { renderPhotos(); toast('この端末では写真を保存できません（プライベートモードでは使えないことがあります）', 5000); });
 
-function begin(first) {
-  tiles.addTo(map);
-  started = true; short.key = ''; updateBounds();
-  if (first && !S.start && navigator.geolocation && window.isSecureContext) {
-    getHere().then(ll => { showPoint(ll, 16); showMe(ll); setPoint('start', ll, '現在地'); }).catch(e => toast(e.message, 4000));
-  }
-}
-if (store.get('agreed', 0) === 3) begin(false);
-else {
-  const w = $('#welcomeDlg');
-  w.addEventListener('cancel', e => e.preventDefault());
-  $('#welcomeOk').onclick = () => { const first = !store.get('agreed', 0); store.set('agreed', 3); w.close(); begin(first); };
-  w.showModal();
+if (!sStart && navigator.geolocation && window.isSecureContext) {
+  getHere().then(ll => { showMe(ll); map.setView(ll, 16); setPoint('start', ll, '現在地'); }).catch(() => {});
 }
 })();
 </script>
