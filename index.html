@@ -848,6 +848,7 @@ textarea.input{resize:vertical;min-height:64px}
 #shareCanvas,#shareVideo,#shareImage{display:block;margin:0 auto;max-width:100%;width:auto;height:auto;max-height:calc(100vh - 330px);max-height:calc(100dvh - 330px);background:#000;border-radius:10px}
 .bar2{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
 .bar2 i{display:block;height:100%;width:0;background:var(--moss)}
+.linkrow{display:flex;flex-direction:column;gap:6px}
 .walk{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px}
 .walk p{margin:0}
 #walkInfo{font-family:var(--display);font-weight:700;font-size:16px}
@@ -1004,7 +1005,7 @@ textarea.input{resize:vertical;min-height:64px}
          <li><b>案内中の現在地</b>　ふだんは送りません。ルートを外れて引き直すときだけ、その時点の現在地をルート検索サーバーに送ります。大きく外れたときは自動で引き直すので、送りたくない場合は「案内」タブの「ルートを大きく外れたら自動で引き直す」のチェックを外してください。</li>
          <li><b>送らないもの</b>　写真、メモ、歩いた軌跡は、アプリからはどこにも送りません。</li>
          <li><b>端末に保存するもの</b>　写真、メモ、スタートとゴール、設定を、この端末のブラウザの中に保存します。写真に含まれていた撮影情報（位置や機種名など）は保存時に取り除き、場所は地図上の位置として別に記録します。歩いた軌跡は、共有用の動画を作るために直近の1回分だけ保存し、次に案内を始めると上書きします。</li>
-         <li><b>共有用の動画</b>　動画はこの端末の中で作ります。背景の地図を入れる場合だけ、歩いた範囲の地図画像を OpenStreetMap から受け取ります。「共有する」で選んだアプリに動画を渡すまで、どこにも送りません。SNSに投稿すると、歩いた場所や時間がほかの人に伝わります。</li>
+         <li><b>共有用の動画</b>　動画はこの端末の中で作ります。背景の地図を入れる場合だけ、歩いた範囲の地図画像を OpenStreetMap から受け取ります。動画の最後には、このアプリの名前とリンクが入ります（作るときのチェックで外せます）。「共有する」で選んだアプリに動画を渡すまで、どこにも送りません。SNSに投稿すると、歩いた場所や時間がほかの人に伝わります。</li>
          <li><b>書き出したファイル</b>　写真と撮った場所、メモがそのまま入っています。人に渡すときは、自宅の場所などが含まれていないか確かめてください。</li>
          <li><b>写真を撮るとき</b>　ほかの人の顔、表札、車のナンバーなどが写った写真の扱いに気をつけてください。</li>
          <li>広告や利用状況の計測は入れていません。</li>
@@ -1016,7 +1017,7 @@ textarea.input{resize:vertical;min-height:64px}
          <li>ルート検索: <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">FOSSGIS e.V.</a> が運営する OSRM サーバー</li>
          <li>地図表示: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>（BSD 2-Clause License）</li>
          <li>これらは寄付とボランティアで運営されている無料のサービスです。ルートの作り直しを何度も繰り返すなど、負荷をかける使い方は控えてください。</li>
-         <li>バージョン: <b id="appVer">1.13（2026年11月12日）</b></li>
+         <li>バージョン: <b id="appVer">1.14（2026年11月13日）</b></li>
          <li id="srcRow" hidden>このアプリの公開元: <a id="srcLink" target="_blank" rel="noopener">GitHub のページ</a></li>
        </ul>
      </details>
@@ -1112,6 +1113,7 @@ textarea.input{resize:vertical;min-height:64px}
       <label class="check"><input type="checkbox" id="shHide" checked> スタートとゴールの近く（約150m）を動画に入れない</label>
       <label class="check"><input type="checkbox" id="shMap" checked> 背景に地図を入れる</label>
       <label class="check"><input type="checkbox" id="shNotes" checked> 写真のメモを入れる</label>
+      <label class="check"><input type="checkbox" id="shPromo" checked> 最後に、このアプリの名前とリンクを入れる</label>
       <p class="alert">動画には歩いた道と写真が入ります。SNSに投稿すると、歩いた場所や時間がほかの人に伝わります。自宅の近くを歩いたときは、1つめのチェックを入れたままにし、写真に自宅や人の顔が写っていないか確かめてください。</p>
       <p class="alert" id="shareErr" hidden>動画を作れませんでした。もう一度試してください。</p>
       <div class="row">
@@ -1133,6 +1135,10 @@ textarea.input{resize:vertical;min-height:64px}
         <button class="btn primary" id="shareGo" type="button">共有する</button>
       </div>
       <p class="note" id="shareHow"></p>
+      <div class="linkrow" id="shareLinkRow" hidden>
+        <span class="label">アプリのリンク（投稿の説明文やプロフィールに貼れます）</span>
+        <div class="place-row"><input class="input" id="shareLink" readonly aria-label="アプリのリンク"><button class="chip" id="shareCopy" type="button">コピー</button></div>
+      </div>
       <button class="btn ghost sm" id="shareClose2" type="button">閉じる</button>
     </div>
   </div>
@@ -2276,6 +2282,8 @@ function renderWalk() {
 }
 
 const VW = 720, VH = 1280;
+const APP_LINK = /^https?:$/.test(location.protocol) && !/^(localhost|127\.|\[::1\])/.test(location.host)
+  ? (location.host + location.pathname.replace(/index\.html?$/i, '')).replace(/\/+$/, '') : '';
 const VFONT = '"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Noto Sans JP",system-ui,sans-serif';
 const mercX = (lng, z) => (lng + 180) / 360 * 256 * 2 ** z;
 const mercY = (lat, z) => { const s = Math.sin(toRad(lat)); return (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * 256 * 2 ** z; };
@@ -2377,7 +2385,8 @@ async function buildScene(opt, onStatus) {
   });
   { const a = prev; if (len - a > 1) clips.push({ dur: Math.max(.3, TR * (len - a) / len), f: u => ({ s: lerp(a, len, u), cam: 1 }) }); }
   clips.push({ dur: 1.1, f: u => ({ s: len, cam: 1 - ease(u), fin: 0 }) });
-  clips.push({ dur: 3.4, f: u => ({ s: len, cam: 0, fin: Math.min(1, u * 5) }) });
+  clips.push({ dur: opt.promo ? 2.8 : 3.4, f: u => ({ s: len, cam: 0, fin: Math.min(1, u * 5) }) });
+  if (opt.promo) clips.push({ dur: 3.2, f: u => ({ s: len, cam: 0, fin: 1, out: Math.min(1, u * 4) }) });   // アプリの紹介とリンク
   const dur = clips.reduce((t, c) => t + c.dur, 0);
   const CZ = clamp(1.8 / k0, 1.25, 1.8);
   const d0 = new Date(walk.t0), title = `${d0.getMonth() + 1}月${d0.getDate()}日のお散歩`;
@@ -2471,6 +2480,25 @@ async function buildScene(opt, onStatus) {
       c.globalAlpha = 1;
     }
 
+    // アプリの紹介とリンク
+    if (st.out) {
+      c.globalAlpha = ease(st.out); c.fillStyle = 'rgba(22,58,42,.9)'; c.fillRect(0, 0, VW, VH);
+      c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+      c.beginPath(); c.arc(VW / 2, 400, 62, 0, 7); c.fillStyle = '#2f6b4f'; c.fill(); c.lineWidth = 5; c.strokeStyle = 'rgba(255,255,255,.9)'; c.stroke();
+      c.save(); c.setLineDash([9, 12]); c.lineCap = 'round'; c.lineWidth = 8; c.strokeStyle = '#fff'; c.beginPath(); c.moveTo(VW / 2 - 28, 428); c.bezierCurveTo(VW / 2 - 4, 420, VW / 2 - 6, 392, VW / 2 + 10, 384); c.bezierCurveTo(VW / 2 + 22, 378, VW / 2 + 24, 366, VW / 2 + 30, 358); c.stroke(); c.restore();
+      c.fillStyle = '#fff'; c.font = `700 92px ${VFONT}`; c.fillText('さんぽみち', VW / 2, 590);
+      c.fillStyle = '#cfe3d6'; c.font = `400 32px ${VFONT}`; c.fillText('いつもと違う道を歩ける、お散歩アプリ', VW / 2, 656);
+      if (APP_LINK) {
+        let size = 38; c.font = `700 ${size}px ${VFONT}`;
+        while (size > 20 && c.measureText(APP_LINK).width > VW - 150) { size -= 2; c.font = `700 ${size}px ${VFONT}`; }
+        const w = c.measureText(APP_LINK).width + 64;
+        rrect(c, VW / 2 - w / 2, 730, w, 84, 42); c.fillStyle = '#fff'; c.fill();
+        c.fillStyle = '#1b2a22'; c.textBaseline = 'middle'; c.fillText(APP_LINK, VW / 2, 774); c.textBaseline = 'alphabetic';
+        c.fillStyle = '#cfe3d6'; c.font = `400 28px ${VFONT}`; c.fillText('ブラウザで開くだけ。登録なし・無料', VW / 2, 880);
+      }
+      c.globalAlpha = 1;
+    }
+
     // 下の帯: 地図の出典とアプリ名
     c.textBaseline = 'middle';
     if (hasMap) {
@@ -2525,7 +2553,7 @@ async function recordScene(scene, canvas, mime, ctl, onProgress) {
   dlg.addEventListener('cancel', cleanup);
 
   $('#shareMake').onclick = async () => {
-    const opt = { hideEnds: $('#shHide').checked, map: $('#shMap').checked, notes: $('#shNotes').checked };
+    const opt = { hideEnds: $('#shHide').checked, map: $('#shMap').checked, notes: $('#shNotes').checked, promo: $('#shPromo').checked };
     const my = ctl = { cancel: false }; let lock = null;
     stage('Rec'); $('#shareStatus').textContent = '準備しています…'; $('#shareBar').style.width = '0%';
     try {
@@ -2566,6 +2594,13 @@ async function recordScene(scene, canvas, mime, ctl, onProgress) {
     if (!result) return;
     try { await navigator.share({ files: [result] }); }
     catch (e) { if (!e || e.name !== 'AbortError') toast('共有できませんでした。「端末に保存する」を使ってください', 4000); }
+  };
+  if (APP_LINK) { $('#shareLinkRow').hidden = false; $('#shareLink').value = 'https://' + APP_LINK + '/'; }
+  $('#shareLink').onfocus = e => e.target.select();
+  $('#shareCopy').onclick = async () => {
+    const el = $('#shareLink');
+    try { await navigator.clipboard.writeText(el.value); toast('リンクをコピーしました'); }
+    catch { el.focus(); el.select(); toast('リンクを選びました。長押しでコピーしてください', 4000); }
   };
   $('#shareSave').onclick = () => {
     if (!result || !url) return;
