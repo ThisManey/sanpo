@@ -1017,7 +1017,7 @@ textarea.input{resize:vertical;min-height:64px}
          <li>ルート検索: <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">FOSSGIS e.V.</a> が運営する OSRM サーバー</li>
          <li>地図表示: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>（BSD 2-Clause License）</li>
          <li>これらは寄付とボランティアで運営されている無料のサービスです。ルートの作り直しを何度も繰り返すなど、負荷をかける使い方は控えてください。</li>
-         <li>バージョン: <b id="appVer">1.14（2026年11月13日）</b></li>
+         <li>バージョン: <b id="appVer">1.15（2026年11月14日）</b></li>
          <li id="srcRow" hidden>このアプリの公開元: <a id="srcLink" target="_blank" rel="noopener">GitHub のページ</a></li>
        </ul>
      </details>
@@ -2510,6 +2510,153 @@ async function buildScene(opt, onStatus) {
   return { dur, draw, hasMap, photos: nPhotos };
 }
 
+// 断片化MP4（ブラウザの録画で出る形式）を、通常のMP4（先頭に目次 moov、そのあとに本体 mdat）に組み直す
+// 映像1本だけの動画が対象。対応できない形のときは null を返す（呼び出し側は元の動画を使う）
+function toProgressiveMp4(buf) {
+  const u8 = new Uint8Array(buf), dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const u32 = o => dv.getUint32(o), u64 = o => dv.getUint32(o) * 4294967296 + dv.getUint32(o + 4);
+  const typ = o => String.fromCharCode(u8[o + 4], u8[o + 5], u8[o + 6], u8[o + 7]);
+  function boxes(start, end) {
+    const out = [];
+    for (let o = start; o + 8 <= end;) {
+      let size = u32(o), hdr = 8;
+      if (size === 1) { size = u64(o + 8); hdr = 16; } else if (size === 0) size = end - o;
+      if (size < hdr || o + size > end) break;
+      out.push({ type: typ(o), start: o, end: o + size, body: o + hdr });
+      o += size;
+    }
+    return out;
+  }
+  const kids = b => boxes(b.body, b.end);
+  const find = (list, t) => list.find(b => b.type === t);
+
+  const top = boxes(0, u8.length);
+  const ftyp = find(top, 'ftyp'), moov = find(top, 'moov');
+  if (!ftyp || !moov || !top.some(b => b.type === 'moof')) return null;     // 断片化していなければ何もしない
+  const mk = kids(moov), traks = mk.filter(b => b.type === 'trak');
+  if (traks.length !== 1) return null;
+  const trak = traks[0], tk = kids(trak), mdia = find(tk, 'mdia'), tkhd = find(tk, 'tkhd');
+  const mdk = kids(mdia), mdhd = find(mdk, 'mdhd'), minf = find(mdk, 'minf');
+  const mik = kids(minf), stbl = find(mik, 'stbl'), stsd = stbl && find(kids(stbl), 'stsd');
+  const mvhd = find(mk, 'mvhd');
+  if (!tkhd || !mdhd || !minf || !stsd || !mvhd) return null;
+  const tkhdV = u8[tkhd.body], trackId = u32(tkhd.body + (tkhdV ? 20 : 12));
+
+  // 既定値（trex）
+  let defDur = 0, defSize = 0, defFlags = 0;
+  const mvex = find(mk, 'mvex');
+  if (mvex) for (const b of kids(mvex)) if (b.type === 'trex' && u32(b.body + 4) === trackId) {
+    defDur = u32(b.body + 12); defSize = u32(b.body + 16); defFlags = u32(b.body + 20);
+  }
+
+  // 断片ごとのサンプル表を集める
+  const S = [];   // { off, size, dur, sync, cto }
+  for (const moof of top.filter(b => b.type === 'moof')) {
+    for (const traf of kids(moof).filter(b => b.type === 'traf')) {
+      const tf = kids(traf), tfhd = find(tf, 'tfhd');
+      if (!tfhd) return null;
+      const fl = u32(tfhd.body) & 0xffffff; let p = tfhd.body + 4;
+      if (u32(p) !== trackId) return null; p += 4;
+      let base = moof.start, dDur = defDur, dSize = defSize, dFlags = defFlags;
+      if (fl & 0x1) { base = u64(p); p += 8; }
+      if (fl & 0x2) p += 4;
+      if (fl & 0x8) { dDur = u32(p); p += 4; }
+      if (fl & 0x10) { dSize = u32(p); p += 4; }
+      if (fl & 0x20) { dFlags = u32(p); p += 4; }
+      let next = null;
+      for (const trun of tf.filter(b => b.type === 'trun')) {
+        const v = u8[trun.body], tfl = u32(trun.body) & 0xffffff, n = u32(trun.body + 4);
+        let q = trun.body + 8, off = next;
+        if (tfl & 0x1) { off = base + dv.getInt32(q); q += 4; }
+        if (off == null) off = base;
+        let first = null; if (tfl & 0x4) { first = u32(q); q += 4; }
+        for (let i = 0; i < n; i++) {
+          let dur = dDur, size = dSize, flags = i === 0 && first != null ? first : dFlags, cto = 0;
+          if (tfl & 0x100) { dur = u32(q); q += 4; }
+          if (tfl & 0x200) { size = u32(q); q += 4; }
+          if (tfl & 0x400) { flags = u32(q); q += 4; }
+          if (tfl & 0x800) { cto = v ? dv.getInt32(q) : u32(q); q += 4; }
+          if (off + size > u8.length) return null;
+          S.push({ off, size, dur, sync: !((flags >>> 16) & 1), cto });
+          off += size;
+        }
+        next = off;
+      }
+    }
+  }
+  if (S.length < 2) return null;
+  for (let i = 0; i < S.length; i++) if (!S[i].dur) S[i].dur = i ? S[i - 1].dur : (S[1].dur || 1);   // 長さ0のコマを直す
+
+  // 書き出し用の道具
+  const parts = []; let total = 0;
+  const W = { u8: n => { parts.push(new Uint8Array([n])); total++; } };
+  function box(type, ...chunks) {
+    let len = 8; for (const c of chunks) len += c.length;
+    const o = new Uint8Array(len), d = new DataView(o.buffer);
+    d.setUint32(0, len); for (let i = 0; i < 4; i++) o[4 + i] = type.charCodeAt(i);
+    let p = 8; for (const c of chunks) { o.set(c, p); p += c.length; }
+    return o;
+  }
+  const ints = (arr, signed) => { const o = new Uint8Array(arr.length * 4), d = new DataView(o.buffer); arr.forEach((x, i) => signed ? d.setInt32(i * 4, x) : d.setUint32(i * 4, x)); return o; };
+  const full = (v, f) => new Uint8Array([v, (f >> 16) & 255, (f >> 8) & 255, f & 255]);
+  const copy = b => u8.slice(b.start, b.end);
+
+  // 長さの書き換え（mvhd / tkhd / mdhd）
+  const mdTS = u32(mdhd.body + (u8[mdhd.body] ? 20 : 12));
+  const mvTS = u32(mvhd.body + (u8[mvhd.body] ? 20 : 12));
+  const mediaDur = S.reduce((t, s) => t + s.dur, 0), movieDur = Math.round(mediaDur * mvTS / mdTS);
+  function withDuration(b, durOffV0, durOffV1, dur) {
+    const o = copy(b), d = new DataView(o.buffer), body = b.body - b.start, v = o[body];
+    if (v) { d.setUint32(body + durOffV1, Math.floor(dur / 4294967296)); d.setUint32(body + durOffV1 + 4, dur >>> 0); }
+    else d.setUint32(body + durOffV0, dur);
+    return o;
+  }
+  const newMvhd = withDuration(mvhd, 16, 24, movieDur);
+  const newTkhd = withDuration(tkhd, 20, 28, movieDur);
+  const newMdhd = withDuration(mdhd, 16, 24, mediaDur);
+
+  // サンプル表（すべてのコマを1つの塊にまとめる）
+  const stts = []; for (const s of S) { const l = stts[stts.length - 1]; if (l && l[1] === s.dur) l[0]++; else stts.push([1, s.dur]); }
+  const tables = [copy(stsd), box('stts', full(0, 0), ints([stts.length, ...stts.flat()]))];
+  if (S.some(s => s.cto)) {
+    const ct = []; for (const s of S) { const l = ct[ct.length - 1]; if (l && l[1] === s.cto) l[0]++; else ct.push([1, s.cto]); }
+    const neg = S.some(s => s.cto < 0);
+    tables.push(box('ctts', full(neg ? 1 : 0, 0), ints([ct.length]), ints(ct.flat(), neg)));
+  }
+  if (!S.every(s => s.sync)) { const ss = []; S.forEach((s, i) => { if (s.sync) ss.push(i + 1); }); tables.push(box('stss', full(0, 0), ints([ss.length, ...ss]))); }
+  tables.push(box('stsc', full(0, 0), ints([1, 1, S.length, 1])));
+  tables.push(box('stsz', full(0, 0), ints([0, S.length, ...S.map(s => s.size)])));
+  const dataLen = S.reduce((t, s) => t + s.size, 0);
+  const stcoAt = () => tables.length;
+  tables.push(null);   // チャンクの位置はあとで入れる
+
+  // moov を組み立てる（断片用の mvex と、編集リスト edts は外す）
+  const build = coOff => {
+    tables[stcoAt() - 1] = coOff > 0xffffffff - dataLen
+      ? box('co64', full(0, 0), ints([1, Math.floor(coOff / 4294967296), coOff >>> 0]))
+      : box('stco', full(0, 0), ints([1, coOff]));
+    const newMinf = box('minf', ...mik.map(b => b.type === 'stbl' ? box('stbl', ...tables) : copy(b)));
+    const newMdia = box('mdia', ...mdk.map(b => b.type === 'mdhd' ? newMdhd : b.type === 'minf' ? newMinf : copy(b)));
+    const newTrak = box('trak', ...tk.filter(b => b.type !== 'edts').map(b => b.type === 'tkhd' ? newTkhd : b.type === 'mdia' ? newMdia : copy(b)));
+    return box('moov', ...mk.filter(b => b.type !== 'mvex').map(b => b.type === 'mvhd' ? newMvhd : b === trak ? newTrak : copy(b)));
+  };
+  const ft = copy(ftyp);
+  let mv = build(0);
+  const big = dataLen + 8 > 0xffffffff, mdatHdr = big ? 16 : 8;
+  mv = build(ft.length + mv.length + mdatHdr);
+  if (mv.length !== build(ft.length + mv.length + mdatHdr).length) mv = build(ft.length + mv.length + mdatHdr);
+
+  // 書き出し: ftyp → moov → mdat
+  const out = new Uint8Array(ft.length + mv.length + mdatHdr + dataLen), od = new DataView(out.buffer);
+  let p = 0; out.set(ft, p); p += ft.length; out.set(mv, p); p += mv.length;
+  if (big) { od.setUint32(p, 1); out.set([109, 100, 97, 116], p + 4); od.setUint32(p + 8, Math.floor((dataLen + 16) / 4294967296)); od.setUint32(p + 12, (dataLen + 16) >>> 0); }
+  else { od.setUint32(p, dataLen + 8); out.set([109, 100, 97, 116], p + 4); }
+  p += mdatHdr;
+  for (const s of S) { out.set(u8.subarray(s.off, s.off + s.size), p); p += s.size; }
+  return out;
+}
+
+
 // 画面に描きながら、そのまま動画として記録する
 async function recordScene(scene, canvas, mime, ctl, onProgress) {
   const c = canvas.getContext('2d'); scene.draw(c, 0);
@@ -2566,6 +2713,12 @@ async function recordScene(scene, canvas, mime, ctl, onProgress) {
         $('#shareStatus').textContent = `動画を作っています（約${Math.round(scene.dur)}秒）。この画面のままお待ちください`;
         blob = await recordScene(scene, canvas, mime, my, p => { $('#shareBar').style.width = (p * 100).toFixed(1) + '%'; });
         ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
+        // ブラウザの録画は断片化したMP4になり、Instagram などでは冒頭の数秒しか認識されないことがある。
+        // 通常のMP4（先頭に全体の目次がある形）に組み直す。組み直せないときは録画したものをそのまま使う
+        if (ext === 'mp4' && blob && blob.size) {
+          $('#shareStatus').textContent = '動画を仕上げています…';
+          try { const fixed = toProgressiveMp4(await blob.arrayBuffer()); if (fixed) blob = new Blob([fixed], { type: 'video/mp4' }); } catch {}
+        }
       } else {
         scene.draw(canvas.getContext('2d'), scene.dur);
         blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', .92)); ext = 'jpg';
